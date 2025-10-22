@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+pydantic
+sqlalchemy
+psycopg2-binary
+redis
+scikit-learn
+xgboost
+lightgbm
+shap
+imbalanced-learn
+mlflow
+python-dotenv
+ctgan
+sdv
+pytest
+pre-commit
