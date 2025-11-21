@@ -10,7 +10,7 @@ import TransactionForm from './components/TransactionForm';
 import ResultPanel from './components/ResultPanel';
 import JobProgressTracker from './components/JobProgressTracker';
 import AdminDashboard from './components/AdminDashboard';
-import { 
+import {
   withRouteProtection,
   AdminOnly,
   AnalystOrAdmin,
@@ -98,7 +98,7 @@ function DashboardApp() {
     setLoading(true);
     const startTime = Date.now();
     let jobId: string | undefined;
-    
+
     try {
       // Create fraud detection job for audit trail
       if (user && userProfile) {
@@ -106,10 +106,10 @@ function DashboardApp() {
           user_id: user.id,
           input_data: data
         });
-        
+
         jobId = jobResult.data?.[0]?.id;
         setCurrentJobId(jobId);
-        
+
         // Log analysis start
         if (jobId) {
           await audit.logFraudAnalysisStart(data.transactionId, jobId, data);
@@ -132,21 +132,21 @@ function DashboardApp() {
 
       const response = await axios.post('http://localhost:8000/predict', apiData);
       setResult(response.data);
-      
+
       // Log successful completion
       const processingTime = Date.now() - startTime;
       if (jobId) {
         await audit.logFraudAnalysisComplete(jobId, response.data, processingTime);
       }
-      
+
     } catch (error) {
       console.error('Error:', error);
-      
+
       // Log analysis error
       if (jobId) {
         await audit.logFraudAnalysisError(jobId, error instanceof Error ? error.message : 'Unknown error');
       }
-      
+
       // Handle error appropriately
     } finally {
       setLoading(false);
@@ -195,27 +195,27 @@ function DashboardApp() {
       auditLogger.logPermissionDenied('navigation', itemId, userProfile?.role || 'unknown');
       return;
     }
-    
+
     // Log navigation using enhanced audit logger
     if (userProfile) {
       await audit.logNavigation(itemId, userProfile.role);
     }
-    
+
     // Show navigation notification
     notifications.navigationSuccess(itemId);
-    
+
     console.log('Navigate to:', itemId);
-    
+
     // Provide user feedback with toast notifications
     const navigationMessages = {
-      'dashboard': '📊 Navigating to Dashboard Overview',
-      'transactions': '💳 Loading Transaction History', 
-      'risk-scoring': '🛡️ Risk Scoring Analysis Active',
-      'reports': '📈 Generating Reports Dashboard',
-      'analytics': '📊 Opening Analytics Center',
-      'settings': '⚙️ Accessing System Settings'
+      'dashboard': 'Navigating to Dashboard Overview',
+      'transactions': 'Loading Transaction History',
+      'risk-scoring': 'Risk Scoring Analysis Active',
+      'reports': 'Generating Reports Dashboard',
+      'analytics': 'Opening Analytics Center',
+      'settings': 'Accessing System Settings'
     };
-    
+
     // Show navigation feedback (you can replace with actual routing)
     if (navigationMessages[itemId as keyof typeof navigationMessages]) {
       // For now just log, but you could show a toast notification
@@ -224,13 +224,13 @@ function DashboardApp() {
   };
 
   return (
-    <motion.div 
+    <motion.div
       className="app-layout"
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
     >
-      <Toaster 
+      <Toaster
         position="top-right"
         toastOptions={{
           style: {
@@ -241,25 +241,25 @@ function DashboardApp() {
           }
         }}
       />
-      
+
       <Sidebar onNavigate={handleNavigation} />
-      
+
       {/* Transaction Form - Analyst and Admin Access */}
       <AnalystOrAdmin>
-        <TransactionForm 
+        <TransactionForm
           onSubmit={handleTransactionSubmit}
           loading={loading}
         />
       </AnalystOrAdmin>
-      
-      <ResultPanel 
+
+      <ResultPanel
         result={result || undefined}
         loading={loading}
       />
 
       {/* Job Progress Tracker - Analyst and Admin Access */}
       <AnalystOrAdmin>
-        <JobProgressTracker 
+        <JobProgressTracker
           jobId={currentJobId}
           onJobComplete={(result) => {
             setResult(result);
@@ -280,7 +280,7 @@ function DashboardApp() {
       )}
 
       {/* Session Warning Modal */}
-      <SessionWarningModal 
+      <SessionWarningModal
         isOpen={sessionInfo.shouldWarn && !sessionInfo.warningShown}
         timeRemaining={sessionInfo.timeRemaining}
         onExtend={extendSession}
@@ -290,7 +290,7 @@ function DashboardApp() {
       {/* System Configuration Modal - Admin Only */}
       {showConfigModal && (
         <AdminOnly>
-          <ConfigValidationModal 
+          <ConfigValidationModal
             isOpen={showConfigModal}
             onClose={() => setShowConfigModal(false)}
           />

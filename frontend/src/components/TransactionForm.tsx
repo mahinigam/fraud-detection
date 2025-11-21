@@ -1,9 +1,9 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
-import { 
-  Play, 
-  RotateCcw, 
-  Upload, 
+import {
+  Play,
+  RotateCcw,
+  Upload,
   Zap,
   DollarSign,
   Clock,
@@ -88,10 +88,10 @@ export default function TransactionForm({ onSubmit, loading = false }: Transacti
 
   const formVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
-      transition: { 
+      transition: {
         duration: 0.6,
         staggerChildren: 0.1
       }
@@ -255,7 +255,7 @@ export default function TransactionForm({ onSubmit, loading = false }: Transacti
           </motion.div>
 
           {/* Action Buttons */}
-          <motion.div 
+          <motion.div
             variants={fieldVariants}
             className="btn-row"
           >
@@ -274,7 +274,7 @@ export default function TransactionForm({ onSubmit, loading = false }: Transacti
               ) : (
                 <>
                   <Play className="w-4 h-4" />
-                  Run Risk Score 🚀
+                  Run Risk Score
                 </>
               )}
             </motion.button>
@@ -287,7 +287,7 @@ export default function TransactionForm({ onSubmit, loading = false }: Transacti
               whileTap={{ scale: 0.98 }}
             >
               <RotateCcw className="w-4 h-4" />
-              Reset Form ↺
+              Reset Form
             </motion.button>
 
             <motion.button
@@ -310,7 +310,7 @@ export default function TransactionForm({ onSubmit, loading = false }: Transacti
               whileTap={{ scale: 0.98 }}
             >
               <Upload className="w-4 h-4" />
-              Upload CSV ⬆️
+              Upload CSV
             </motion.button>
 
             <motion.button

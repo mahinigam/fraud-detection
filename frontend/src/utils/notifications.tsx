@@ -1,11 +1,11 @@
 import React from 'react'
 import toast from 'react-hot-toast'
 import { motion } from 'framer-motion'
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle, 
-  Info, 
+import {
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  Info,
   Clock,
   Shield,
   User,
@@ -40,7 +40,7 @@ const colorSchemes = {
   },
   error: {
     icon: 'text-red-400',
-    border: 'border-red-500/30', 
+    border: 'border-red-500/30',
     bg: 'bg-red-500/10'
   },
   warning: {
@@ -58,7 +58,7 @@ const colorSchemes = {
 class NotificationService {
   private static instance: NotificationService
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): NotificationService {
     if (!NotificationService.instance) {
@@ -68,7 +68,7 @@ class NotificationService {
   }
 
   private createToastContent(
-    message: string, 
+    message: string,
     type: 'success' | 'error' | 'warning' | 'info',
     action?: { label: string; onClick: () => void }
   ) {
@@ -179,12 +179,12 @@ class NotificationService {
   }
 
   jobCompleted(riskScore: number, isFraud: boolean) {
-    const message = isFraud 
-      ? `⚠️ FRAUD DETECTED - Risk Score: ${riskScore}%`
-      : `✅ Transaction Legitimate - Risk Score: ${riskScore}%`
-    
+    const message = isFraud
+      ? `FRAUD DETECTED - Risk Score: ${riskScore}%`
+      : `Transaction Legitimate - Risk Score: ${riskScore}%`
+
     const type = isFraud ? 'warning' : 'success'
-    
+
     this.show(message, {
       type,
       duration: 6000,
@@ -328,15 +328,15 @@ export const NotificationTemplates = {
     SESSION_EXPIRED: 'Your session has expired. Please log in again.',
     INVALID_CREDENTIALS: 'Invalid email or password'
   },
-  
+
   FRAUD_ANALYSIS: {
     STARTED: (id: string) => `Analysis started for transaction ${id}`,
     PROCESSING: (progress: number) => `Analysis ${progress}% complete`,
-    COMPLETED_SAFE: (score: number) => `✅ Transaction appears legitimate (${score}% risk)`,
-    COMPLETED_FRAUD: (score: number) => `⚠️ Potential fraud detected (${score}% risk)`,
+    COMPLETED_SAFE: (score: number) => `Transaction appears legitimate (${score}% risk)`,
+    COMPLETED_FRAUD: (score: number) => `Potential fraud detected (${score}% risk)`,
     FAILED: (error: string) => `Analysis failed: ${error}`
   },
-  
+
   SYSTEM: {
     SAVING: 'Saving changes...',
     SAVED: 'Changes saved successfully',

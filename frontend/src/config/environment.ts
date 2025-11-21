@@ -413,16 +413,16 @@ function getEnvironment(): Environment {
   if (import.meta.env.VITE_ENVIRONMENT) {
     return import.meta.env.VITE_ENVIRONMENT as Environment
   }
-  
+
   // Check NODE_ENV
   if (import.meta.env.NODE_ENV === 'production') {
     return 'production'
   }
-  
+
   if (import.meta.env.NODE_ENV === 'test') {
     return 'test'
   }
-  
+
   // Check hostname for staging
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname
@@ -433,7 +433,7 @@ function getEnvironment(): Environment {
       return 'development'
     }
   }
-  
+
   return 'development'
 }
 
@@ -517,7 +517,7 @@ const baseConfig: AppConfig = {
 function createConfig(): AppConfig {
   const env = getEnvironment()
   let envConfig: EnvironmentConfig
-  
+
   switch (env) {
     case 'production':
       envConfig = productionConfig
@@ -531,7 +531,7 @@ function createConfig(): AppConfig {
     default:
       envConfig = developmentConfig
   }
-  
+
   // Deep merge configuration
   return {
     ...baseConfig,
@@ -540,14 +540,14 @@ function createConfig(): AppConfig {
     buildNumber: envConfig.buildNumber || baseConfig.buildNumber,
     debug: envConfig.debug !== undefined ? envConfig.debug : baseConfig.debug,
     database: { ...baseConfig.database, ...envConfig.database },
-    api: { 
-      ...baseConfig.api, 
+    api: {
+      ...baseConfig.api,
       ...envConfig.api,
       rateLimit: { ...baseConfig.api.rateLimit, ...envConfig.api?.rateLimit },
       cors: { ...baseConfig.api.cors, ...envConfig.api?.cors }
     },
-    security: { 
-      ...baseConfig.security, 
+    security: {
+      ...baseConfig.security,
       ...envConfig.security,
       passwordPolicy: { ...baseConfig.security.passwordPolicy, ...envConfig.security?.passwordPolicy }
     },
@@ -560,43 +560,43 @@ function createConfig(): AppConfig {
 // Validate configuration
 function validateConfig(config: AppConfig): { isValid: boolean; errors: string[] } {
   const errors: string[] = []
-  
+
   // Validate required database configuration
   if (!config.database.supabaseUrl) {
     errors.push('VITE_SUPABASE_URL environment variable is required')
   }
-  
+
   if (!config.database.supabaseAnonKey) {
     errors.push('VITE_SUPABASE_ANON_KEY environment variable is required')
   }
-  
+
   // Validate URL format
   try {
     new URL(config.database.supabaseUrl)
   } catch {
     errors.push('VITE_SUPABASE_URL must be a valid URL')
   }
-  
+
   try {
     new URL(config.api.fraudDetectionEndpoint)
   } catch {
     errors.push('VITE_FRAUD_API_ENDPOINT must be a valid URL')
   }
-  
+
   // Validate security configuration
   if (config.security.sessionTimeout < 60000) { // Less than 1 minute
     errors.push('Session timeout must be at least 1 minute')
   }
-  
+
   if (config.security.maxLoginAttempts < 1) {
     errors.push('Max login attempts must be at least 1')
   }
-  
+
   // Validate feature flags dependencies
   if (config.features.enableSessionManagement && config.security.sessionTimeout < 60000) {
     errors.push('Session management requires session timeout of at least 1 minute')
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors
@@ -626,7 +626,7 @@ export function getConfig<T extends keyof AppConfig>(key: T): AppConfig[T] {
 // Dynamic configuration updates (for runtime feature flag changes)
 export function updateFeatureFlag(flag: keyof FeatureFlags, value: boolean): void {
   config.features[flag] = value
-  
+
   // Persist to localStorage for user preferences
   try {
     const userPrefs = JSON.parse(localStorage.getItem('user_feature_preferences') || '{}')
@@ -654,7 +654,7 @@ export function loadUserPreferences(): void {
 // Configuration debugging
 export function logConfiguration(): void {
   if (config.debug || isDevelopment) {
-    console.group('🔧 Fraud Detection System Configuration')
+    console.group('Fraud Detection System Configuration')
     console.log('Environment:', config.environment)
     console.log('Version:', config.version)
     console.log('Build:', config.buildNumber)
@@ -678,10 +678,10 @@ if (typeof window !== 'undefined' && config.monitoring.enableConsoleLogging) {
 
 // Export validation result
 if (!configValidation.isValid) {
-  console.error('❌ Configuration validation failed:', configValidation.errors)
+  console.error('Configuration validation failed:', configValidation.errors)
   if (isProduction) {
     throw new Error('Invalid configuration in production environment')
   }
 } else {
-  console.log('✅ Configuration validation passed')
+  console.log('Configuration validation passed')
 }

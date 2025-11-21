@@ -1,10 +1,10 @@
-# 🚀 **End-to-End Fraud Detection & Transaction Risk Scoring System**
+# **End-to-End Fraud Detection & Transaction Risk Scoring System**
 
-## 📊 **Project Overview**
+## **Project Overview**
 
 A complete, production-grade fraud detection system built with modern ML/AI technologies, featuring real-time transaction analysis, risk scoring, and a beautiful web interface.
 
-### 🎯 **Key Features**
+### **Key Features**
 
 - **Advanced ML Models**: XGBoost with 99.95% ROC-AUC accuracy
 - **Real-time API**: FastAPI backend for instant fraud predictions  
@@ -14,7 +14,7 @@ A complete, production-grade fraud detection system built with modern ML/AI tech
 
 ---
 
-## 🏗️ **System Architecture**
+## **System Architecture**
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────┐
@@ -29,15 +29,15 @@ A complete, production-grade fraud detection system built with modern ML/AI tech
 
 ---
 
-## 📁 **Project Structure**
+## **Project Structure**
 
 ```
 fraud_detection/
-├── 📊 notebooks/                    # Jupyter notebooks for ML pipeline
+├── notebooks/                    # Jupyter notebooks for ML pipeline
 │   ├── eda.ipynb                   # Exploratory Data Analysis
 │   ├── feature_engineering.ipynb   # Advanced feature engineering
 │   └── model_training.ipynb        # Model training & optimization
-├── 🔧 backend/                     # FastAPI backend service
+├── backend/                     # FastAPI backend service
 │   ├── main.py                     # FastAPI application
 │   ├── models/                     # Trained models & artifacts
 │   │   ├── final_xgb_model.pkl     # Production XGBoost model
@@ -45,22 +45,22 @@ fraud_detection/
 │   │   └── model_metadata.json     # Model information & metrics
 │   ├── requirements.txt            # Backend dependencies
 │   └── test_api_new.py             # API integration tests
-├── 🌐 frontend/                    # React frontend application
+├── frontend/                    # React frontend application
 │   ├── src/
 │   │   ├── FraudDetectionApp.tsx   # Main fraud detection interface
 │   │   ├── App.jsx                 # App wrapper
 │   │   └── index.css               # Tailwind CSS styles
 │   ├── package.json                # Frontend dependencies
 │   └── vite.config.js              # Vite configuration
-├── 📊 data/                        # Data storage
+├── data/                        # Data storage
 │   └── features/                   # Engineered features
-├── 🧪 test_full_system.py          # End-to-end system tests
-└── 📖 README.md                    # This documentation
+├── test_full_system.py          # End-to-end system tests
+└── README.md                    # This documentation
 ```
 
 ---
 
-## 🚀 **Quick Start Guide**
+## **Quick Start Guide**
 
 ### **1. Start the Backend API**
 ```bash
@@ -68,14 +68,14 @@ cd backend
 source ../.venv/bin/activate
 python main.py
 ```
-✅ **Backend running**: http://localhost:8000
+**Backend running**: http://localhost:8000
 
 ### **2. Start the Frontend**
 ```bash
 cd frontend
 npm run dev
 ```
-✅ **Frontend running**: http://localhost:3000
+**Frontend running**: http://localhost:3000
 
 ### **3. Test the System**
 ```bash
@@ -86,7 +86,7 @@ python test_full_system.py
 
 ---
 
-## 📊 **Model Performance**
+## **Model Performance**
 
 | Metric | Value | Description |
 |--------|--------|-------------|
@@ -96,14 +96,14 @@ python test_full_system.py
 | **F1-Score** | 28.6% | Balanced performance measure |
 | **Training Data** | 6.3M+ transactions | Large-scale dataset |
 
-### **🎯 Risk Scoring Levels**
-- 🟢 **Low Risk** (0-10%): Normal transactions, proceed
-- 🟡 **Medium Risk** (10-50%): Additional verification recommended  
-- 🔴 **High Risk** (50%+): Manual review required
+### **Risk Scoring Levels**
+- **Low Risk** (0-10%): Normal transactions, proceed
+- **Medium Risk** (10-50%): Additional verification recommended  
+- **High Risk** (50%+): Manual review required
 
 ---
 
-## 🔗 **API Endpoints**
+## **API Endpoints**
 
 ### **Health Check**
 ```bash
@@ -132,7 +132,7 @@ Response: {
 
 ---
 
-## 🧠 **Machine Learning Pipeline**
+## **Machine Learning Pipeline**
 
 ### **Data Processing**
 1. **Feature Engineering**: Advanced feature creation from raw transaction data
@@ -160,7 +160,7 @@ Response: {
 
 ---
 
-## 🎨 **Frontend Features**
+## **Frontend Features**
 
 ### **Modern UI Components**
 - **Responsive Design**: Works on desktop, tablet, and mobile
@@ -177,29 +177,29 @@ Response: {
 
 ---
 
-## ✅ **Testing Results**
+## **Testing Results**
 
 ### **Backend API Tests** (7/7 Passed - 100%)
 ```
-🔍 Normal PAYMENT → Risk: 0.99% (✅ LEGITIMATE)
-🔍 Small TRANSFER → Risk: 55.39% (🚨 FRAUD) 
-🔍 Large TRANSFER → Risk: 0.00% (✅ LEGITIMATE)
-🔍 Large CASH_OUT → Risk: 0.22% (✅ LEGITIMATE)
-🔍 Flagged CASH_OUT → Risk: 0.05% (✅ LEGITIMATE)
-🔍 Million $ TRANSFER → Risk: 0.00% (✅ LEGITIMATE)
-🔍 Small PAYMENT → Risk: 0.07% (✅ LEGITIMATE)
+Normal PAYMENT → Risk: 0.99% (LEGITIMATE)
+Small TRANSFER → Risk: 55.39% (FRAUD) 
+Large TRANSFER → Risk: 0.00% (LEGITIMATE)
+Large CASH_OUT → Risk: 0.22% (LEGITIMATE)
+Flagged CASH_OUT → Risk: 0.05% (LEGITIMATE)
+Million $ TRANSFER → Risk: 0.00% (LEGITIMATE)
+Small PAYMENT → Risk: 0.07% (LEGITIMATE)
 ```
 
 ### **Model Validation**
-- ✅ Model loading and serving working perfectly
-- ✅ Feature scaling applied correctly
-- ✅ Predictions within expected ranges
-- ✅ Error handling for invalid inputs
-- ✅ Performance metrics as expected
+- Model loading and serving working perfectly
+- Feature scaling applied correctly
+- Predictions within expected ranges
+- Error handling for invalid inputs
+- Performance metrics as expected
 
 ---
 
-## 🔧 **Technology Stack**
+## **Technology Stack**
 
 ### **Backend**
 - **Framework**: FastAPI (Python)
@@ -225,7 +225,7 @@ Response: {
 
 ---
 
-## 📈 **Next Steps & Future Enhancements**
+## **Next Steps & Future Enhancements**
 
 ### **Immediate Improvements**
 - [ ] **Model Monitoring**: Implement drift detection and performance tracking
@@ -250,19 +250,19 @@ Response: {
 
 ---
 
-## 🏆 **Key Achievements**
+## **Key Achievements**
 
-✅ **Production-Grade ML Pipeline**: Complete end-to-end machine learning workflow  
-✅ **High-Performance Model**: 99.95% ROC-AUC with advanced optimization techniques  
-✅ **Modern Web Application**: Professional React frontend with real-time predictions  
-✅ **Robust API**: FastAPI backend with proper error handling and documentation  
-✅ **Comprehensive Testing**: End-to-end integration tests with 100% success rate  
-✅ **Scalable Architecture**: Microservices design ready for production deployment  
-✅ **Advanced Features**: Feature engineering, model explainability, and drift detection  
+**Production-Grade ML Pipeline**: Complete end-to-end machine learning workflow  
+**High-Performance Model**: 99.95% ROC-AUC with advanced optimization techniques  
+**Modern Web Application**: Professional React frontend with real-time predictions  
+**Robust API**: FastAPI backend with proper error handling and documentation  
+**Comprehensive Testing**: End-to-end integration tests with 100% success rate  
+**Scalable Architecture**: Microservices design ready for production deployment  
+**Advanced Features**: Feature engineering, model explainability, and drift detection  
 
 ---
 
-## 📞 **Support & Documentation**
+## **Support & Documentation**
 
 - **API Documentation**: http://localhost:8000/docs
 - **Frontend Interface**: http://localhost:3000  
@@ -272,14 +272,14 @@ Response: {
 
 ---
 
-## 🎉 **Project Status: COMPLETE ✅**
+## **Project Status: COMPLETE**
 
 This fraud detection system is **production-ready** with:
-- ✅ Trained and validated ML model (99.95% accuracy)
-- ✅ Complete backend API with health checks and predictions
-- ✅ Modern frontend interface with real-time fraud analysis  
-- ✅ Comprehensive testing suite (100% pass rate)
-- ✅ Professional documentation and deployment guides
-- ✅ Scalable architecture for future enhancements
+- Trained and validated ML model (99.95% accuracy)
+- Complete backend API with health checks and predictions
+- Modern frontend interface with real-time fraud analysis  
+- Comprehensive testing suite (100% pass rate)
+- Professional documentation and deployment guides
+- Scalable architecture for future enhancements
 
-**Ready for deployment, portfolio showcase, and further development!** 🚀
+**Ready for deployment, portfolio showcase, and further development!**

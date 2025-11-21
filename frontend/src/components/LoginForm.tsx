@@ -31,7 +31,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
     try {
       const { error } = await signIn(email, password)
-      
+
       if (error) {
         setError(error.message || 'Invalid login credentials')
       } else {
@@ -52,7 +52,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
 
     try {
       const { error } = await signIn(demoEmail, demoPassword)
-      
+
       if (error) {
         setError('Demo account not available. Please contact administrator.')
       } else {
@@ -224,7 +224,7 @@ export default function LoginForm({ onSuccess }: LoginFormProps) {
           {/* Footer */}
           <div className="text-center text-xs text-white/40 space-y-1">
             <p>Secure authentication powered by Supabase</p>
-            <p>© 2024 Fraud Detection System. All rights reserved.</p>
+            <p>Copyright 2024 Fraud Detection System. All rights reserved.</p>
           </div>
         </div>
       </motion.div>

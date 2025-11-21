@@ -13,22 +13,22 @@ BASE_URL = "http://localhost:8000"
 
 def test_health_check():
     """Test the health endpoint"""
-    print("🔍 Testing health endpoint...")
+    print("Testing health endpoint...")
     try:
         response = requests.get(f"{BASE_URL}/health")
         if response.status_code == 200:
-            print("✅ Health check passed")
+            print("Health check passed")
             return True
         else:
-            print(f"❌ Health check failed: {response.status_code}")
+            print(f"Health check failed: {response.status_code}")
             return False
     except Exception as e:
-        print(f"❌ Health check error: {e}")
+        print(f"Health check error: {e}")
         return False
 
 def test_fraud_prediction(transaction_data, description):
     """Test fraud prediction with given transaction data"""
-    print(f"\n🔍 Testing: {description}")
+    print(f"\nTesting: {description}")
     print(f"Transaction: {transaction_data}")
     
     try:
@@ -43,33 +43,33 @@ def test_fraud_prediction(transaction_data, description):
             risk_score = result["risk_score"]
             prediction = result["prediction"]
             
-            risk_level = "🟢 LOW" if risk_score < 0.1 else "🟡 MEDIUM" if risk_score < 0.5 else "🔴 HIGH"
-            fraud_status = "🚨 FRAUD" if prediction == 1 else "✅ LEGITIMATE"
+            risk_level = "LOW" if risk_score < 0.1 else "MEDIUM" if risk_score < 0.5 else "HIGH"
+            fraud_status = "FRAUD" if prediction == 1 else "LEGITIMATE"
             
-            print(f"✅ Prediction successful:")
+            print(f"Prediction successful:")
             print(f"   Risk Score: {risk_score:.4f} ({risk_score*100:.2f}%)")
             print(f"   Risk Level: {risk_level}")
             print(f"   Classification: {fraud_status}")
             
             return True
         else:
-            print(f"❌ Prediction failed: {response.status_code}")
+            print(f"Prediction failed: {response.status_code}")
             print(f"Response: {response.text}")
             return False
             
     except Exception as e:
-        print(f"❌ Prediction error: {e}")
+        print(f"Prediction error: {e}")
         return False
 
 def main():
     """Run comprehensive tests"""
     print("=" * 60)
-    print("🚀 FRAUD DETECTION SYSTEM - INTEGRATION TEST")
+    print("FRAUD DETECTION SYSTEM - INTEGRATION TEST")
     print("=" * 60)
     
     # Test health endpoint
     if not test_health_check():
-        print("❌ Cannot proceed - backend is not healthy")
+        print("Cannot proceed - backend is not healthy")
         return
     
     # Test cases based on the PaySim dataset structure
@@ -115,19 +115,19 @@ def main():
     
     # Summary
     print("\n" + "=" * 60)
-    print("📊 TEST SUMMARY")
+    print("TEST SUMMARY")
     print("=" * 60)
-    print(f"✅ Successful tests: {successful_tests}/{total_tests}")
+    print(f"Successful tests: {successful_tests}/{total_tests}")
     print(f"Success rate: {successful_tests/total_tests*100:.1f}%")
     
     if successful_tests == total_tests:
-        print("🎉 All tests passed! The fraud detection system is working perfectly!")
+        print("All tests passed! The fraud detection system is working perfectly!")
     else:
-        print("⚠️ Some tests failed. Please check the backend logs.")
+        print("Some tests failed. Please check the backend logs.")
     
-    print("\n🌐 Frontend URL: http://localhost:3000")
-    print("🔗 Backend API: http://localhost:8000")
-    print("📚 API Docs: http://localhost:8000/docs")
+    print("\nFrontend URL: http://localhost:3000")
+    print("Backend API: http://localhost:8000")
+    print("API Docs: http://localhost:8000/docs")
 
 if __name__ == "__main__":
     main()

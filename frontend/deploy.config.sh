@@ -6,19 +6,19 @@ build:dev:
 	@echo "Building for development..."
 	@cp .env.development .env.local
 	@npm run build
-	@echo "✅ Development build complete"
+	@echo "Development build complete"
 
 build:staging:
 	@echo "Building for staging..."
 	@cp .env.staging .env.local
 	@npm run build
-	@echo "✅ Staging build complete"
+	@echo "Staging build complete"
 
 build:prod:
 	@echo "Building for production..."
 	@cp .env.production .env.local
 	@npm run build
-	@echo "✅ Production build complete"
+	@echo "Production build complete"
 
 # Docker Configuration
 FROM node:18-alpine as build
@@ -77,7 +77,7 @@ server {
 # Environment Validation Script
 #!/bin/bash
 validate_environment() {
-    echo "🔍 Validating environment configuration..."
+    echo "Validating environment configuration..."
     
     # Required environment variables
     REQUIRED_VARS=(
@@ -96,49 +96,49 @@ validate_environment() {
     done
     
     if [ ${#MISSING_VARS[@]} -ne 0 ]; then
-        echo "❌ Missing required environment variables:"
+        echo "Missing required environment variables:"
         printf '   - %s\n' "${MISSING_VARS[@]}"
         echo "Please set these variables before deployment."
         exit 1
     fi
     
-    echo "✅ Environment validation passed"
+    echo "Environment validation passed"
 }
 
 # Security Check Script
 #!/bin/bash
 security_check() {
-    echo "🔒 Running security checks..."
+    echo "Running security checks..."
     
     # Check for default/demo credentials
     if [[ "$VITE_SUPABASE_URL" == *"your-project"* ]]; then
-        echo "❌ Default Supabase URL detected. Please update with actual credentials."
+        echo "Default Supabase URL detected. Please update with actual credentials."
         exit 1
     fi
     
     if [[ "$VITE_SUPABASE_ANON_KEY" == *"your-"* ]]; then
-        echo "❌ Default Supabase key detected. Please update with actual credentials."
+        echo "Default Supabase key detected. Please update with actual credentials."
         exit 1
     fi
     
     # Check environment-specific security
     if [ "$VITE_ENVIRONMENT" = "production" ]; then
         if [ "$VITE_ENABLE_BETA_FEATURES" = "true" ]; then
-            echo "⚠️  Warning: Beta features enabled in production"
+            echo "Warning: Beta features enabled in production"
         fi
         
         if [ -z "$VITE_ERROR_REPORTING_ENDPOINT" ]; then
-            echo "⚠️  Warning: Error reporting not configured for production"
+            echo "Warning: Error reporting not configured for production"
         fi
     fi
     
-    echo "✅ Security checks completed"
+    echo "Security checks completed"
 }
 
 # Performance Optimization Check
 #!/bin/bash
 performance_check() {
-    echo "⚡ Running performance checks..."
+    echo "Running performance checks..."
     
     # Check bundle size
     if [ -f "dist/assets/index-*.js" ]; then
@@ -146,24 +146,24 @@ performance_check() {
         BUNDLE_SIZE_MB=$((BUNDLE_SIZE / 1024 / 1024))
         
         if [ $BUNDLE_SIZE_MB -gt 1 ]; then
-            echo "⚠️  Warning: Large bundle size detected: ${BUNDLE_SIZE_MB}MB"
+            echo "Warning: Large bundle size detected: ${BUNDLE_SIZE_MB}MB"
             echo "   Consider code splitting or lazy loading"
         else
-            echo "✅ Bundle size acceptable: ${BUNDLE_SIZE_MB}MB"
+            echo "Bundle size acceptable: ${BUNDLE_SIZE_MB}MB"
         fi
     fi
     
     # Check if assets are compressed
     if [ -f "dist/assets/index-*.css" ]; then
-        echo "✅ CSS assets found"
+        echo "CSS assets found"
     fi
     
-    echo "✅ Performance checks completed"
+    echo "Performance checks completed"
 }
 
 # Complete deployment pipeline
 deploy() {
-    echo "🚀 Starting deployment pipeline..."
+    echo "Starting deployment pipeline..."
     
     validate_environment
     security_check
@@ -185,38 +185,38 @@ deploy() {
             ;;
     esac
     
-    echo "✅ Deployment pipeline completed successfully"
+    echo "Deployment pipeline completed successfully"
 }
 
 # Health check endpoint for monitoring
 health_check() {
-    echo "💓 Application health check..."
+    echo "Application health check..."
     
     # Check if build directory exists
     if [ ! -d "dist" ]; then
-        echo "❌ Build directory not found"
+        echo "Build directory not found"
         return 1
     fi
     
     # Check if index.html exists
     if [ ! -f "dist/index.html" ]; then
-        echo "❌ index.html not found"
+        echo "index.html not found"
         return 1
     fi
     
     # Check if assets exist
     if [ ! -d "dist/assets" ]; then
-        echo "❌ Assets directory not found"
+        echo "Assets directory not found"
         return 1
     fi
     
-    echo "✅ Application health check passed"
+    echo "Application health check passed"
     return 0
 }
 
 # Monitoring and logging configuration
 monitoring_setup() {
-    echo "📊 Setting up monitoring..."
+    echo "Setting up monitoring..."
     
     # Create monitoring directories
     mkdir -p logs
@@ -237,20 +237,20 @@ monitoring_setup() {
 }
 EOF
     
-    echo "✅ Monitoring setup completed"
+    echo "Monitoring setup completed"
 }
 
 # Database migration check (if applicable)
 db_check() {
-    echo "🗄️  Checking database connectivity..."
+    echo "Checking database connectivity..."
     
     if [ -n "$VITE_SUPABASE_URL" ]; then
         # Simple connectivity check
         curl -s "$VITE_SUPABASE_URL/rest/v1/" > /dev/null
         if [ $? -eq 0 ]; then
-            echo "✅ Database connectivity verified"
+            echo "Database connectivity verified"
         else
-            echo "❌ Database connectivity failed"
+            echo "Database connectivity failed"
             return 1
         fi
     fi
@@ -260,7 +260,7 @@ db_check() {
 
 # Backup configuration
 backup_config() {
-    echo "💾 Creating configuration backup..."
+    echo "Creating configuration backup..."
     
     BACKUP_DIR="backups/$(date +%Y%m%d_%H%M%S)"
     mkdir -p "$BACKUP_DIR"
@@ -274,7 +274,7 @@ backup_config() {
     # Backup configuration files
     cp *.config.* "$BACKUP_DIR/" 2>/dev/null || true
     
-    echo "✅ Configuration backed up to $BACKUP_DIR"
+    echo "Configuration backed up to $BACKUP_DIR"
 }
 
 # Main deployment function

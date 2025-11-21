@@ -24,14 +24,14 @@ try:
     model_uri = f"models:/{EXPERIMENT_NAME}/latest"
     model = mlflow.sklearn.load_model(model_uri)
     scaler = joblib.load(SCALER_LOCAL_PATH)
-    print("✅ Model loaded from MLflow")
+    print("Model loaded from MLflow")
 except Exception as e:
-    print(f"⚠️ MLflow loading failed: {e}")
-    print("📁 Loading from local files...")
+    print(f"MLflow loading failed: {e}")
+    print("Loading from local files...")
     # Update paths to use the correct model files
     model = joblib.load("models/final_xgb_model.pkl")
     scaler = joblib.load("models/scaler.pkl")
-    print("✅ Model and scaler loaded from local files")
+    print("Model and scaler loaded from local files")
 
 class Features(BaseModel):
     features: list

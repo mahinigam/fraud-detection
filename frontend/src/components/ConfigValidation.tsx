@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
-  Settings, 
-  Database, 
+import {
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Settings,
+  Database,
   Shield,
   Monitor,
   Palette,
@@ -73,7 +73,7 @@ export const ConfigValidationModal: React.FC<ConfigValidationProps> = ({ isOpen,
               </button>
             </div>
           </div>
-          
+
           {/* Tabs */}
           <div className="flex gap-1 mt-4">
             {tabs.map((tab) => {
@@ -82,11 +82,10 @@ export const ConfigValidationModal: React.FC<ConfigValidationProps> = ({ isOpen,
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                    activeTab === tab.id
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${activeTab === tab.id
                       ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
                       : 'text-white/70 hover:text-white hover:bg-white/10'
-                  }`}
+                    }`}
                 >
                   <Icon className="w-4 h-4" />
                   {tab.label}
@@ -161,7 +160,7 @@ const ValidationTab: React.FC = () => {
 
       {configValidation.isValid && (
         <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
-          <p className="text-green-300">✅ All configuration checks passed successfully</p>
+          <p className="text-green-300">All configuration checks passed successfully</p>
         </div>
       )}
 
@@ -417,11 +416,10 @@ const FeaturesTab: React.FC = () => {
                   </div>
                   <p className="text-sm text-white/60 mt-1">{feature.description}</p>
                 </div>
-                <div className={`px-2 py-1 rounded text-xs font-medium ${
-                  isEnabled 
-                    ? 'bg-green-500/20 text-green-400' 
+                <div className={`px-2 py-1 rounded text-xs font-medium ${isEnabled
+                    ? 'bg-green-500/20 text-green-400'
                     : 'bg-gray-500/20 text-gray-400'
-                }`}>
+                  }`}>
                   {isEnabled ? 'Enabled' : 'Disabled'}
                 </div>
               </div>
@@ -487,12 +485,11 @@ const MonitoringTab: React.FC = () => {
           </div>
           <div className="p-4 bg-white/5 rounded-lg">
             <h4 className="font-medium text-white mb-2">Log Level</h4>
-            <span className={`px-2 py-1 rounded text-xs font-medium ${
-              config.monitoring.logLevel === 'error' ? 'bg-red-500/20 text-red-400' :
-              config.monitoring.logLevel === 'warn' ? 'bg-yellow-500/20 text-yellow-400' :
-              config.monitoring.logLevel === 'info' ? 'bg-blue-500/20 text-blue-400' :
-              'bg-purple-500/20 text-purple-400'
-            }`}>
+            <span className={`px-2 py-1 rounded text-xs font-medium ${config.monitoring.logLevel === 'error' ? 'bg-red-500/20 text-red-400' :
+                config.monitoring.logLevel === 'warn' ? 'bg-yellow-500/20 text-yellow-400' :
+                  config.monitoring.logLevel === 'info' ? 'bg-blue-500/20 text-blue-400' :
+                    'bg-purple-500/20 text-purple-400'
+              }`}>
               {config.monitoring.logLevel.toUpperCase()}
             </span>
           </div>

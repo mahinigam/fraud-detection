@@ -1,5 +1,5 @@
 -- ===============================================
--- 🏢 Fraud Detection System Database Schema
+-- Fraud Detection System Database Schema
 -- Supabase PostgreSQL with Row Level Security
 -- ===============================================
 
@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ===============================================
--- 👤 USER MANAGEMENT
+-- USER MANAGEMENT
 -- ===============================================
 
 -- Create custom user roles enum
@@ -47,7 +47,7 @@ CREATE TRIGGER update_users_updated_at
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ===============================================
--- 📊 FRAUD DETECTION JOBS
+-- FRAUD DETECTION JOBS
 -- ===============================================
 
 -- Create job status enum
@@ -99,7 +99,7 @@ CREATE TRIGGER update_fraud_jobs_timing
     FOR EACH ROW EXECUTE FUNCTION update_job_timing();
 
 -- ===============================================
--- 🔍 AUDIT LOGGING
+-- AUDIT LOGGING
 -- ===============================================
 
 -- Create audit logs table for compliance
@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS public.audit_logs (
 );
 
 -- ===============================================
--- 🔐 ROW LEVEL SECURITY (RLS) POLICIES
+-- ROW LEVEL SECURITY (RLS) POLICIES
 -- ===============================================
 
 -- Enable RLS on all tables
@@ -194,7 +194,7 @@ CREATE POLICY "All authenticated users can create audit logs" ON public.audit_lo
     FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 
 -- ===============================================
--- 🎯 SEED DATA
+-- SEED DATA
 -- ===============================================
 
 -- Create demo users (requires manual password setup in Supabase Auth)
@@ -228,7 +228,7 @@ INSERT INTO public.users (id, email, full_name, role, department) VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- ===============================================
--- 📈 ANALYTICS VIEWS
+-- ANALYTICS VIEWS
 -- ===============================================
 
 -- Create view for user activity statistics
@@ -267,7 +267,7 @@ CROSS JOIN public.fraud_detection_jobs j
 CROSS JOIN public.audit_logs al;
 
 -- ===============================================
--- 🔧 HELPER FUNCTIONS
+-- HELPER FUNCTIONS
 -- ===============================================
 
 -- Function to get user role
@@ -311,7 +311,7 @@ END;
 $$;
 
 -- ===============================================
--- 📝 COMMENTS AND DOCUMENTATION
+-- COMMENTS AND DOCUMENTATION
 -- ===============================================
 
 COMMENT ON TABLE public.users IS 'Extended user profiles linked to Supabase auth';
@@ -323,15 +323,15 @@ COMMENT ON COLUMN public.fraud_detection_jobs.progress_percentage IS 'Job comple
 COMMENT ON COLUMN public.audit_logs.details IS 'Additional context and metadata for the audited action';
 
 -- ===============================================
--- ✅ SCHEMA SETUP COMPLETE
+-- SCHEMA SETUP COMPLETE
 -- ===============================================
 
 -- This schema provides:
--- 1. ✅ Role-based user management with proper constraints
--- 2. ✅ Comprehensive job tracking with real-time updates
--- 3. ✅ Full audit logging for compliance requirements
--- 4. ✅ Row Level Security for data protection
--- 5. ✅ Performance indexes for efficient queries
--- 6. ✅ Analytics views for reporting and monitoring
--- 7. ✅ Helper functions for permission checking
--- 8. ✅ Automated triggers for data consistency
+-- 1. Role-based user management with proper constraints
+-- 2. Comprehensive job tracking with real-time updates
+-- 3. Full audit logging for compliance requirements
+-- 4. Row Level Security for data protection
+-- 5. Performance indexes for efficient queries
+-- 6. Analytics views for reporting and monitoring
+-- 7. Helper functions for permission checking
+-- 8. Automated triggers for data consistency

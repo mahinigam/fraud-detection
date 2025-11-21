@@ -12,22 +12,22 @@ API_URL = "http://localhost:8000"
 
 def test_health_endpoint():
     """Test the health endpoint"""
-    print("🔍 Testing health endpoint...")
+    print("Testing health endpoint...")
     try:
         response = requests.get(f"{API_URL}/health")
         if response.status_code == 200:
-            print("✅ Health endpoint working:", response.json())
+            print("Health endpoint working:", response.json())
             return True
         else:
-            print(f"❌ Health endpoint failed: {response.status_code}")
+            print(f"Health endpoint failed: {response.status_code}")
             return False
     except Exception as e:
-        print(f"❌ Health endpoint error: {e}")
+        print(f"Health endpoint error: {e}")
         return False
 
 def test_prediction_endpoint():
     """Test the prediction endpoint with sample data"""
-    print("\n🔍 Testing prediction endpoint...")
+    print("\nTesting prediction endpoint...")
     
     # Sample transaction features based on the trained model
     # Features: step, amount, oldbalanceOrg, oldbalanceDest, isFlaggedFraud, 
@@ -49,26 +49,26 @@ def test_prediction_endpoint():
     ]
     
     for test_case in test_cases:
-        print(f"\n📋 Testing: {test_case['name']}")
+        print(f"\nTesting: {test_case['name']}")
         try:
             payload = {"features": test_case["features"]}
             response = requests.post(f"{API_URL}/predict", json=payload)
             
             if response.status_code == 200:
                 result = response.json()
-                print(f"✅ Prediction successful:")
-                print(f"   🎯 Prediction: {result['prediction']} ({'Fraud' if result['prediction'] == 1 else 'Normal'})")
-                print(f"   📊 Risk Score: {result['risk_score']:.4f}")
+                print(f"Prediction successful:")
+                print(f"   Prediction: {result['prediction']} ({'Fraud' if result['prediction'] == 1 else 'Normal'})")
+                print(f"   Risk Score: {result['risk_score']:.4f}")
             else:
-                print(f"❌ Prediction failed: {response.status_code}")
+                print(f"Prediction failed: {response.status_code}")
                 print(f"   Error: {response.text}")
                 
         except Exception as e:
-            print(f"❌ Prediction error: {e}")
+            print(f"Prediction error: {e}")
 
 def test_invalid_input():
     """Test the API with invalid input"""
-    print("\n🔍 Testing invalid input handling...")
+    print("\nTesting invalid input handling...")
     
     invalid_cases = [
         {
@@ -86,27 +86,27 @@ def test_invalid_input():
     ]
     
     for test_case in invalid_cases:
-        print(f"\n📋 Testing: {test_case['name']}")
+        print(f"\nTesting: {test_case['name']}")
         try:
             response = requests.post(f"{API_URL}/predict", json=test_case["payload"])
             result = response.json()
             
             if "error" in result:
-                print(f"✅ Error handling working: {result['error']}")
+                print(f"Error handling working: {result['error']}")
             else:
-                print(f"⚠️ Unexpected response: {result}")
+                print(f"Unexpected response: {result}")
                 
         except Exception as e:
-            print(f"❌ Test error: {e}")
+            print(f"Test error: {e}")
 
 def main():
     """Run all API tests"""
-    print("🚀 Starting Fraud Detection API Tests\n")
+    print("Starting Fraud Detection API Tests\n")
     print("=" * 50)
     
     # Test health endpoint
     if not test_health_endpoint():
-        print("❌ Server not responding. Make sure the API is running on port 8000")
+        print("Server not responding. Make sure the API is running on port 8000")
         return
     
     # Test prediction functionality
@@ -116,7 +116,7 @@ def main():
     test_invalid_input()
     
     print("\n" + "=" * 50)
-    print("🏁 API testing completed!")
+    print("API testing completed!")
 
 if __name__ == "__main__":
     main()

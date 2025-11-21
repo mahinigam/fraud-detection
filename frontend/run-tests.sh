@@ -5,7 +5,7 @@
 
 set -e
 
-echo "🧪 Starting Fraud Detection System Test Suite"
+echo "Starting Fraud Detection System Test Suite"
 echo "=============================================="
 
 # Colors for output
@@ -123,10 +123,10 @@ run_unit_tests() {
     fi
     
     if [ $? -eq 0 ]; then
-        print_success "Unit tests passed ✅"
+        print_success "Unit tests passed"
         return 0
     else
-        print_error "Unit tests failed ❌"
+        print_error "Unit tests failed"
         return 1
     fi
 }
@@ -144,10 +144,10 @@ run_integration_tests() {
     fi
     
     if [ $? -eq 0 ]; then
-        print_success "Integration tests passed ✅"
+        print_success "Integration tests passed"
         return 0
     else
-        print_error "Integration tests failed ❌"
+        print_error "Integration tests failed"
         return 1
     fi
 }
@@ -189,10 +189,10 @@ run_e2e_tests() {
     fi
     
     if [ $E2E_EXIT_CODE -eq 0 ]; then
-        print_success "E2E tests passed ✅"
+        print_success "E2E tests passed"
         return 0
     else
-        print_error "E2E tests failed ❌"
+        print_error "E2E tests failed"
         return 1
     fi
 }
@@ -222,17 +222,17 @@ generate_report() {
 </head>
 <body>
     <div class="header">
-        <h1>🧪 Fraud Detection System Test Report</h1>
+        <h1>Fraud Detection System Test Report</h1>
         <p>Generated on: $(date)</p>
     </div>
     
     <div class="section">
-        <h2>📊 Test Summary</h2>
+        <h2>Test Summary</h2>
         <p>This report shows the results of all automated tests for the Fraud Detection System.</p>
     </div>
     
     <div class="section">
-        <h2>📁 Available Reports</h2>
+        <h2>Available Reports</h2>
         <ul>
             <li><a href="coverage/index.html">Code Coverage Report</a></li>
             <li><a href="playwright-report/index.html">E2E Test Report</a></li>
@@ -241,7 +241,7 @@ generate_report() {
     </div>
     
     <div class="section">
-        <h2>🔧 Test Environment</h2>
+        <h2>Test Environment</h2>
         <ul>
             <li>Node.js: $(node --version)</li>
             <li>npm: $(npm --version)</li>
@@ -297,19 +297,19 @@ fi
 echo ""
 echo "=============================================="
 if [ "$OVERALL_SUCCESS" = true ]; then
-    print_success "🎉 All tests completed successfully!"
+    print_success "All tests completed successfully!"
     
     if [ "$COVERAGE" = true ]; then
-        print_status "📊 Coverage report available at: test-results/coverage/index.html"
+        print_status "Coverage report available at: test-results/coverage/index.html"
     fi
     
     if [ "$RUN_E2E" = true ]; then
-        print_status "🎭 E2E report available at: test-results/playwright-report/index.html"  
+        print_status "E2E report available at: test-results/playwright-report/index.html"  
     fi
     
-    print_status "📋 Combined report available at: test-results/index.html"
+    print_status "Combined report available at: test-results/index.html"
     exit 0
 else
-    print_error "❌ Some tests failed. Check the output above for details."
+    print_error "Some tests failed. Check the output above for details."
     exit 1
 fi

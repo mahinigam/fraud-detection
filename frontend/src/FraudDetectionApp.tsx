@@ -36,7 +36,7 @@ const FraudDetectionApp: React.FC = () => {
     newbalanceDest: 0,
     isFlaggedFraud: 0,
   });
-  
+
   const [result, setResult] = useState<PredictionResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [showResult, setShowResult] = useState(false);
@@ -58,7 +58,7 @@ const FraudDetectionApp: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       // Convert form data to the expected format for the model
       const features = [
@@ -73,11 +73,11 @@ const FraudDetectionApp: React.FC = () => {
         form.newbalanceDest,
         form.isFlaggedFraud
       ];
-      
+
       const response = await axios.post<PredictionResult>('http://localhost:8000/predict', {
         features
       });
-      
+
       setResult(response.data);
       setShowResult(true);
       toast.success('Fraud analysis completed!');
@@ -111,7 +111,7 @@ const FraudDetectionApp: React.FC = () => {
   return (
     <div className="app-shell">
       <Toaster position="top-right" />
-      
+
       <div style={{ maxWidth: '64rem', width: '100%' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
@@ -131,7 +131,7 @@ const FraudDetectionApp: React.FC = () => {
               <AlertCircle style={{ height: '1.5rem', width: '1.5rem', color: '#ffffff', marginRight: '0.5rem' }} />
               Transaction Details
             </h2>
-            
+
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
                 <div className="form-group">
@@ -148,7 +148,7 @@ const FraudDetectionApp: React.FC = () => {
                     required
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label">
                     Transaction Type
@@ -197,7 +197,7 @@ const FraudDetectionApp: React.FC = () => {
                     placeholder="e.g., C123456789"
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label">
                     Destination Account
@@ -228,7 +228,7 @@ const FraudDetectionApp: React.FC = () => {
                     step="0.01"
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label">
                     Origin New Balance
@@ -260,7 +260,7 @@ const FraudDetectionApp: React.FC = () => {
                     step="0.01"
                   />
                 </div>
-                
+
                 <div className="form-group">
                   <label className="form-label">
                     Destination New Balance
@@ -305,10 +305,10 @@ const FraudDetectionApp: React.FC = () => {
                       Analyzing Transaction...
                     </>
                   ) : (
-                    '🔍 Analyze Transaction'
+                    'Analyze Transaction'
                   )}
                 </button>
-                
+
                 <button
                   type="button"
                   onClick={resetForm}
@@ -326,7 +326,7 @@ const FraudDetectionApp: React.FC = () => {
               <Shield style={{ height: '1.5rem', width: '1.5rem', color: '#ffffff', marginRight: '0.5rem' }} />
               Analysis Results
             </h2>
-            
+
             {!showResult ? (
               <div className="flex items-center justify-center" style={{ height: '16rem', color: 'var(--muted)' }}>
                 <div style={{ textAlign: 'center' }}>
@@ -341,10 +341,9 @@ const FraudDetectionApp: React.FC = () => {
                   <div className="flex items-center justify-center mb-4">
                     <riskInfo.icon style={{ height: '4rem', width: '4rem', color: 'rgba(255,255,255,0.8)' }} />
                   </div>
-                  <div className={`risk-indicator ${
-                    result.risk_score < 0.1 ? 'risk-low' :
-                    result.risk_score < 0.5 ? 'risk-medium' : 'risk-high'
-                  }`}>
+                  <div className={`risk-indicator ${result.risk_score < 0.1 ? 'risk-low' :
+                      result.risk_score < 0.5 ? 'risk-medium' : 'risk-high'
+                    }`}>
                     {riskInfo.level} Risk
                   </div>
                   <div className="risk-score">
@@ -356,10 +355,9 @@ const FraudDetectionApp: React.FC = () => {
                 {/* Animated Risk Progress Bar */}
                 <div className="progress-bar">
                   <div
-                    className={`progress-fill ${
-                      result.risk_score < 0.1 ? 'progress-low' :
-                      result.risk_score < 0.5 ? 'progress-medium' : 'progress-high'
-                    }`}
+                    className={`progress-fill ${result.risk_score < 0.1 ? 'progress-low' :
+                        result.risk_score < 0.5 ? 'progress-medium' : 'progress-high'
+                      }`}
                     style={{ width: `${Math.min(result.risk_score * 100, 100)}%` }}
                   ></div>
                 </div>
@@ -371,7 +369,7 @@ const FraudDetectionApp: React.FC = () => {
                     <div className="detail-row">
                       <span className="detail-label">Classification:</span>
                       <span className={`detail-value ${result.prediction === 1 ? 'risk-high' : 'risk-low'}`} style={{ color: result.prediction === 1 ? 'rgba(255,69,58,1)' : 'rgba(52,199,89,1)' }}>
-                        {result.prediction === 1 ? '🚨 FRAUDULENT' : '✅ LEGITIMATE'}
+                        {result.prediction === 1 ? 'FRAUDULENT' : 'LEGITIMATE'}
                       </span>
                     </div>
                     <div className="detail-row">
@@ -386,25 +384,24 @@ const FraudDetectionApp: React.FC = () => {
                 </div>
 
                 {/* Enhanced Recommendations */}
-                <div className={`details-panel ${
-                  result.risk_score < 0.1 ? 'risk-low' :
-                  result.risk_score < 0.5 ? 'risk-medium' : 'risk-high'
-                }`} style={{ 
-                  background: result.risk_score < 0.1 ? 'rgba(52,199,89,0.1)' :
-                              result.risk_score < 0.5 ? 'rgba(255,149,0,0.1)' : 'rgba(255,69,58,0.1)',
-                  borderLeft: `4px solid ${result.risk_score < 0.1 ? 'rgba(52,199,89,0.8)' :
-                                           result.risk_score < 0.5 ? 'rgba(255,149,0,0.8)' : 'rgba(255,69,58,0.8)'}`
-                }}>
+                <div className={`details-panel ${result.risk_score < 0.1 ? 'risk-low' :
+                    result.risk_score < 0.5 ? 'risk-medium' : 'risk-high'
+                  }`} style={{
+                    background: result.risk_score < 0.1 ? 'rgba(52,199,89,0.1)' :
+                      result.risk_score < 0.5 ? 'rgba(255,149,0,0.1)' : 'rgba(255,69,58,0.1)',
+                    borderLeft: `4px solid ${result.risk_score < 0.1 ? 'rgba(52,199,89,0.8)' :
+                      result.risk_score < 0.5 ? 'rgba(255,149,0,0.8)' : 'rgba(255,69,58,0.8)'}`
+                  }}>
                   <h4 className="glass-header" style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>
-                    {result.risk_score < 0.1 ? '🎯 Recommendation' :
-                     result.risk_score < 0.5 ? '⚠️ Caution Required' : '🛡️ Security Alert'}
+                    {result.risk_score < 0.1 ? 'Recommendation' :
+                      result.risk_score < 0.5 ? 'Caution Required' : 'Security Alert'}
                   </h4>
                   <p className="glass-muted" style={{ lineHeight: '1.6' }}>
-                    {result.risk_score < 0.1 ? 
+                    {result.risk_score < 0.1 ?
                       'Transaction appears legitimate with high confidence. Proceed with standard processing and automated approval.' :
                       result.risk_score < 0.5 ?
-                      'Transaction shows moderate risk indicators. Consider additional verification steps or temporary hold for manual review.' :
-                      'High fraud probability detected. Immediate manual review required with enhanced authentication and potential transaction blocking.'
+                        'Transaction shows moderate risk indicators. Consider additional verification steps or temporary hold for manual review.' :
+                        'High fraud probability detected. Immediate manual review required with enhanced authentication and potential transaction blocking.'
                     }
                   </p>
                 </div>

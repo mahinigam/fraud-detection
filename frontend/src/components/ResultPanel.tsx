@@ -185,7 +185,7 @@ export default function ResultPanel({ result, loading = false }: ResultPanelProp
         <div className="detail-row">
           <span className="detail-label">Classification</span>
           <span className={`detail-value font-bold ${result.prediction === 1 ? 'text-red-400' : 'text-green-400'}`}>
-            {result.prediction === 1 ? '🚨 FRAUDULENT' : '✅ LEGITIMATE'}
+            {result.prediction === 1 ? 'FRAUDULENT' : 'LEGITIMATE'}
           </span>
         </div>
         <div className="detail-row">

@@ -1,14 +1,14 @@
-# 🚀 Supabase Setup Guide
+# Supabase Setup Guide
 ## Fraud Detection System Authentication Setup
 
-### 📋 Prerequisites
+### Prerequisites
 - Supabase account (https://supabase.com)
 - Node.js and npm installed
 - Basic understanding of PostgreSQL
 
-### 🎯 Quick Start (5 Steps)
+### Quick Start (5 Steps)
 
-#### 1️⃣ **Create Supabase Project**
+#### 1. **Create Supabase Project**
 1. Go to https://supabase.com/dashboard
 2. Click "New Project"
 3. Choose organization and project name: `fraud-detection-system`
@@ -16,7 +16,7 @@
 5. Select region closest to your users
 6. Click "Create new project"
 
-#### 2️⃣ **Get Project Credentials**
+#### 2. **Get Project Credentials**
 1. Go to Project Settings → API
 2. Copy your project URL and anon key:
    ```
@@ -24,7 +24,7 @@
    Anon Key: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
    ```
 
-#### 3️⃣ **Configure Environment Variables**
+#### 3. **Configure Environment Variables**
 1. In your frontend folder, create `.env.local`:
    ```bash
    cd frontend
@@ -39,38 +39,38 @@
    VITE_APP_VERSION=1.0.0
    ```
 
-#### 4️⃣ **Set Up Database Schema**
+#### 4. **Set Up Database Schema**
 1. In Supabase Dashboard, go to "SQL Editor"
 2. Copy the entire content from `database/schema.sql`
 3. Paste it into a new query and click "Run"
 4. Verify tables were created in "Table Editor"
 
-#### 5️⃣ **Create Demo Users**
+#### 5. **Create Demo Users**
 In Supabase Dashboard, go to Authentication → Users → Add User:
 
 **Admin User:**
 - Email: `admin@frauddetection.com`
 - Password: `admin123`
-- Email Confirm: ✅ Enabled
+- Email Confirm: Enabled
 
 **Analyst User:**
 - Email: `analyst@frauddetection.com` 
 - Password: `analyst123`
-- Email Confirm: ✅ Enabled
+- Email Confirm: Enabled
 
 **Auditor User:**
 - Email: `auditor@frauddetection.com`
 - Password: `auditor123`
-- Email Confirm: ✅ Enabled
+- Email Confirm: Enabled
 
-### 🔧 Database Configuration
+### Database Configuration
 
 #### Row Level Security (RLS)
 Our schema automatically enables RLS with these policies:
-- ✅ Users can only see their own data (unless admin/auditor)
-- ✅ Admins have full access to all resources
-- ✅ Auditors can view jobs and audit logs (read-only)
-- ✅ Analysts can create/manage their own detection jobs
+- Users can only see their own data (unless admin/auditor)
+- Admins have full access to all resources
+- Auditors can view jobs and audit logs (read-only)
+- Analysts can create/manage their own detection jobs
 
 #### Authentication Settings
 1. Go to Authentication → Settings
@@ -78,7 +78,7 @@ Our schema automatically enables RLS with these policies:
 3. Enable email change confirmations: **Enabled**
 4. Site URL: `http://localhost:3000` (development)
 
-### 🎨 Frontend Integration
+### Frontend Integration
 
 #### Install Dependencies
 ```bash
@@ -93,7 +93,7 @@ npm install @supabase/supabase-js
 - Updated `src/App.tsx` - Auth integration
 - Updated `src/components/Sidebar.tsx` - Role-based UI
 
-### 🧪 Testing Authentication
+### Testing Authentication
 
 #### 1. Start Development Server
 ```bash
@@ -114,46 +114,46 @@ npm run dev
 3. Test creating fraud detection jobs
 4. Check audit logs are being created
 
-### 🔍 Role-Based Features
+### Role-Based Features
 
 #### **Admin** (`admin@frauddetection.com`)
-- ✅ Full dashboard access
-- ✅ User management
-- ✅ System settings
-- ✅ Audit logs viewer
-- ✅ All fraud detection features
+- Full dashboard access
+- User management
+- System settings
+- Audit logs viewer
+- All fraud detection features
 
 #### **Analyst** (`analyst@frauddetection.com`)
-- ✅ Dashboard and analytics
-- ✅ Risk scoring and detection
-- ✅ Transaction analysis
-- ✅ Own job management
+- Dashboard and analytics
+- Risk scoring and detection
+- Transaction analysis
+- Own job management
 
 #### **Auditor** (`auditor@frauddetection.com`)
-- ✅ Dashboard (read-only)
-- ✅ Audit logs access
-- ✅ Reports and analytics
-- ❌ No job creation/editing
+- Dashboard (read-only)
+- Audit logs access
+- Reports and analytics
+- No job creation/editing
 
-### 🛠 Troubleshooting
+### Troubleshooting
 
 #### Common Issues
 
-**❌ "Invalid login credentials"**
+**"Invalid login credentials"**
 - Solution: Verify demo users were created in Supabase Auth
 - Check email/password match exactly
 - Ensure email confirmation is disabled
 
-**❌ "Property 'env' does not exist on type 'ImportMeta'"**
+**"Property 'env' does not exist on type 'ImportMeta'"**
 - Solution: Ensure `.env.local` file exists with correct variables
 - Restart development server after adding env vars
 
-**❌ "Failed to fetch"**  
+**"Failed to fetch"**  
 - Solution: Check VITE_SUPABASE_URL is correct
 - Verify network connectivity to Supabase
 - Check browser console for CORS issues
 
-**❌ RLS Policy Violations**
+**RLS Policy Violations**
 - Solution: Verify user profiles exist in `users` table
 - Check user roles are set correctly
 - Review RLS policies in Supabase
@@ -164,7 +164,7 @@ npm run dev
 3. Verify environment variables: `console.log(import.meta.env)`
 4. Check authentication state in React DevTools
 
-### 🚀 Production Deployment
+### Production Deployment
 
 #### Environment Variables
 Update for production:
@@ -183,7 +183,7 @@ VITE_APP_NAME=Fraud Detection System
 - [ ] Configure rate limiting
 - [ ] Review RLS policies
 
-### 📊 Monitoring & Analytics
+### Monitoring & Analytics
 
 #### Supabase Dashboard
 - Authentication → Users: Monitor user registrations
@@ -198,18 +198,18 @@ The schema includes analytics views:
 - Real-time job progress tracking
 - Comprehensive audit trails
 
-### 🎯 Next Steps
+### Next Steps
 
 With authentication working, you can now:
 
-1. ✅ **Test Role-Based Access** - Login as different users
-2. 🔄 **Implement Job Management** - Real-time progress tracking
-3. 📊 **Add Admin Components** - User management interface
-4. 🔔 **Set Up Notifications** - Real-time alerts and updates
-5. 🧪 **Write Tests** - Authentication and role-based flows
-6. 🚀 **Deploy to Production** - With proper security settings
+1. **Test Role-Based Access** - Login as different users
+2. **Implement Job Management** - Real-time progress tracking
+3. **Add Admin Components** - User management interface
+4. **Set Up Notifications** - Real-time alerts and updates
+5. **Write Tests** - Authentication and role-based flows
+6. **Deploy to Production** - With proper security settings
 
-### 🆘 Support
+### Support
 
 If you encounter issues:
 1. Check this guide first
@@ -220,4 +220,4 @@ If you encounter issues:
 
 ---
 
-**🎉 Congratulations!** Your fraud detection system now has enterprise-grade authentication with role-based access control, audit logging, and real-time capabilities!
+**Congratulations!** Your fraud detection system now has enterprise-grade authentication with role-based access control, audit logging, and real-time capabilities!
