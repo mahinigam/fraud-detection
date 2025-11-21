@@ -1,0 +1,96 @@
+{
+  "model_type": "XGBoost",
+  "chosen_model": "Standard Model",
+  "model_path": "final_xgb_model.pkl",
+  "scaler_path": "scaler.pkl",
+  "training_date": "2025-10-23T22:45:07.212494",
+  "dataset_info": {
+    "total_original_samples": 6362620,
+    "training_samples_before_smote": 4453834,
+    "training_samples_after_smote": 8896170,
+    "validation_samples": 636262,
+    "test_samples": 1272524,
+    "features": 10,
+    "original_class_distribution": {
+      "0": 6354407,
+      "1": 8213
+    }
+  },
+  "hyperparameter_search": {
+    "search_type": "RandomizedSearchCV",
+    "cv_folds": 3,
+    "n_iterations": 25,
+    "search_time_seconds": 34.45710492134094,
+    "best_params_found": {
+      "subsample": 0.8,
+      "n_estimators": 200,
+      "max_depth": 8,
+      "learning_rate": 0.1,
+      "colsample_bytree": 0.8
+    },
+    "best_cv_score": 0.9998359971219367
+  },
+  "final_model_performance_on_test": {
+    "roc_auc": 0.9994607739446031,
+    "precision": 0.16704196519959058,
+    "recall": 0.9933049300060864,
+    "f1": 0.28598966091299394,
+    "auc_pr": 0.9181424430327916
+  },
+  "final_model_training_time_seconds": 24.253007173538208,
+  "feature_columns": [
+    "step",
+    "amount",
+    "oldbalanceOrg",
+    "oldbalanceDest",
+    "isFlaggedFraud",
+    "type_CASH_IN",
+    "type_CASH_OUT",
+    "type_DEBIT",
+    "type_PAYMENT",
+    "type_TRANSFER"
+  ],
+  "top_features": [
+    {
+      "feature": "type_CASH_IN",
+      "importance": 0.6089985966682434
+    },
+    {
+      "feature": "type_PAYMENT",
+      "importance": 0.24032802879810333
+    },
+    {
+      "feature": "oldbalanceOrg",
+      "importance": 0.0447220653295517
+    },
+    {
+      "feature": "type_CASH_OUT",
+      "importance": 0.03298582509160042
+    },
+    {
+      "feature": "type_TRANSFER",
+      "importance": 0.027820125222206116
+    },
+    {
+      "feature": "amount",
+      "importance": 0.024618370458483696
+    },
+    {
+      "feature": "type_DEBIT",
+      "importance": 0.009093298576772213
+    },
+    {
+      "feature": "step",
+      "importance": 0.005090212449431419
+    },
+    {
+      "feature": "oldbalanceDest",
+      "importance": 0.0039938329719007015
+    },
+    {
+      "feature": "isFlaggedFraud",
+      "importance": 0.002349624177441001
+    }
+  ],
+  "psi_train_vs_test": 2.947021118477939
+}
