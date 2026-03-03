@@ -10,13 +10,13 @@ A production-grade fraud detection system implementing a three-stage Imbalance H
 │  6.3M rows   │────▶│  6.3M rows   │────▶│  Impute/Norm │
 │  400+ feats  │     │  11 feats    │     │  Freq Encode │
 └──────────────┘     └──────────────┘     └──────┬───────┘
-                                                  │
-                          ┌───────────────────────▼──────────────────┐
-                          │     Three-Stage IHS                      │
-                          │  1. SMOTE (Data-Level)                   │
-                          │  2. Class Weights (Algorithm-Level)      │
-                          │  3. Threshold Optimization (Decision)    │
-                          └───────────────────────┬──────────────────┘
+                                                 │
+                          ┌──────────────────────▼──────────────────┐
+                          │     Three-Stage IHS                     │
+                          │  1. SMOTE (Data-Level)                  │
+                          │  2. Class Weights (Algorithm-Level)     │
+                          │  3. Threshold Optimization (Decision)   │
+                          └───────────────────────┬─────────────────┘
                                                   │
      ┌────────────────────────────────────────────▼───────────────────────┐
      │                        Model Suite (10 Models)                     │
