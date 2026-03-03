@@ -34,7 +34,7 @@ SMOTE_CONFIG = {
 
 
 # ─── SVM Subsampling ────────────────────────────────────────────────────────
-SVM_SUBSAMPLE_SIZE = 100_000
+SVM_SUBSAMPLE_SIZE = 50_000
 
 
 # ─── Device Configuration ───────────────────────────────────────────────────
@@ -82,12 +82,12 @@ SEARCH_SPACES = {
         "min_samples_leaf": (1, 10),
         "max_features": ["sqrt", "log2"],
     },
-    "gradient_boosting": {
-        "n_estimators": (100, 500),
+    "hist_gradient_boosting": {
+        "max_iter": (100, 500),
         "max_depth": (3, 10),
         "learning_rate": (0.01, 0.3, "log"),
-        "subsample": (0.6, 1.0),
-        "min_samples_split": (2, 20),
+        "min_samples_leaf": (5, 50),
+        "max_leaf_nodes": (20, 100),
     },
     "xgboost": {
         "n_estimators": (100, 1000),

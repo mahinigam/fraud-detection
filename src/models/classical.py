@@ -1,37 +1,50 @@
 """
 Classical ML models: Logistic Regression, SVM (RBF), Decision Tree,
-Random Forest, Gradient Boosting.
+Random Forest, HistGradientBoosting.
 
-SVM uses stratified 100K subsampling for training scalability.
+SVM uses pre-SMOTE stratified 50K subsampling with SMOTE applied to the subset.
+HistGradientBoostingClassifier replaces sklearn's GBM for multi-threaded performance.
 """
 
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
 from sklearn.model_selection import train_test_split
 
 from config.settings import RANDOM_STATE, SVM_SUBSAMPLE_SIZE, get_logger
+from src.ihs.smote import apply_smote
 
 logger = get_logger(__name__)
 
 
-def _subsample_for_svm(X, y, n_samples=SVM_SUBSAMPLE_SIZE):
-    """Stratified subsampling for SVM training."""
-    if len(X) <= n_samples:
-        return X, y
-    X_sub, _, y_sub, _ = train_test_split(
-        X, y,
-        train_size=n_samples,
-        stratify=y,
-        random_state=RANDOM_STATE,
-    )
+def _prepare_svm_data(X_original, y_original, n_samples=SVM_SUBSAMPLE_SIZE):
+    """
+    SVM-specific data prep: subsample from ORIGINAL (pre-SMOTE) data,
+    then apply SMOTE to the small subset.
+
+    This avoids the O(n²) blowup from training SVM on dense SMOTE'd data.
+    """
+    # Step 1: Stratified subsample from original imbalanced data
+    if len(X_original) <= n_samples:
+        X_sub, y_sub = X_original, y_original
+    else:
+        X_sub, _, y_sub, _ = train_test_split(
+            X_original, y_original,
+            train_size=n_samples,
+            stratify=y_original,
+            random_state=RANDOM_STATE,
+        )
     logger.info(
-        f"SVM subsampled: {len(X_sub):,} from {len(X):,} "
+        f"SVM subsampled: {len(X_sub):,} from {len(X_original):,} "
         f"(fraud rate preserved: {np.mean(y_sub):.4%})"
     )
-    return X_sub, y_sub
+
+    # Step 2: Apply SMOTE to the small subset
+    X_svm, y_svm = apply_smote(X_sub, y_sub)
+    logger.info(f"SVM post-SMOTE: {len(X_svm):,} samples (balanced)")
+    return X_svm, y_svm
 
 
 def build_classical_models(class_weights: dict | None = None) -> dict:
@@ -54,11 +67,10 @@ def build_classical_models(class_weights: dict | None = None) -> dict:
             solver="saga",
             max_iter=1000,
             random_state=RANDOM_STATE,
-            n_jobs=-1,
         ),
         "svm_rbf": SVC(
             kernel="rbf",
-            probability=True,
+            probability=False,  # Disabled: Platt scaling triples training time
             class_weight=class_weights,
             random_state=RANDOM_STATE,
         ),
@@ -72,11 +84,10 @@ def build_classical_models(class_weights: dict | None = None) -> dict:
             random_state=RANDOM_STATE,
             n_jobs=-1,
         ),
-        "gradient_boosting": GradientBoostingClassifier(
-            n_estimators=200,
+        "hist_gradient_boosting": HistGradientBoostingClassifier(
+            max_iter=200,
             random_state=RANDOM_STATE,
-            # GBM doesn't support class_weight directly;
-            # sample_weight handled in training loop
+            class_weight="balanced",
         ),
     }
     return models
@@ -87,31 +98,39 @@ def train_classical_model(
     model_name: str,
     X_train: np.ndarray,
     y_train: np.ndarray,
+    X_original: np.ndarray | None = None,
+    y_original: np.ndarray | None = None,
     sample_weight: np.ndarray | None = None,
 ) -> object:
     """
-    Train a classical model. Applies subsampling for SVM.
+    Train a classical model.
+    SVM uses pre-SMOTE subsampling + SMOTE on subset.
 
     Parameters
     ----------
     model : sklearn estimator
     model_name : str
-    X_train, y_train : arrays
-    sample_weight : optional, for models that don't support class_weight
+    X_train, y_train : SMOTE'd training arrays (used for all models except SVM)
+    X_original, y_original : Original pre-SMOTE data (used for SVM subsampling)
+    sample_weight : optional
 
     Returns
     -------
     Fitted model
     """
     if model_name == "svm_rbf":
-        X_fit, y_fit = _subsample_for_svm(X_train, y_train)
+        if X_original is not None and y_original is not None:
+            X_fit, y_fit = _prepare_svm_data(X_original, y_original)
+        else:
+            # Fallback: subsample from whatever was passed
+            X_fit, y_fit = _prepare_svm_data(X_train, y_train)
         logger.info(f"Training {model_name} on {len(X_fit):,} samples ...")
         model.fit(X_fit, y_fit)
-    elif model_name == "gradient_boosting" and sample_weight is not None:
+    elif sample_weight is not None:
         logger.info(f"Training {model_name} with sample_weight ...")
         model.fit(X_train, y_train, sample_weight=sample_weight)
     else:
-        logger.info(f"Training {model_name} ...")
+        logger.info(f"Training {model_name} on {len(X_train):,} samples ...")
         model.fit(X_train, y_train)
 
     logger.info(f"  {model_name} trained successfully.")

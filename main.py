@@ -58,7 +58,7 @@ logger = get_logger("main")
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
+from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from catboost import CatBoostClassifier
@@ -68,7 +68,7 @@ MODEL_CLASSES = {
     "svm_rbf": SVC,
     "decision_tree": DecisionTreeClassifier,
     "random_forest": RandomForestClassifier,
-    "gradient_boosting": GradientBoostingClassifier,
+    "hist_gradient_boosting": HistGradientBoostingClassifier,
     "xgboost": XGBClassifier,
     "lightgbm": LGBMClassifier,
     "catboost": CatBoostClassifier,
@@ -95,6 +95,11 @@ def _evaluate_model(model, model_name, X_test, y_test, threshold=0.5) -> dict:
     """Evaluate a single model with a given threshold."""
     if hasattr(model, "predict_proba"):
         y_prob = model.predict_proba(X_test)[:, 1]
+    elif hasattr(model, "decision_function"):
+        # SVM with probability=False: use decision_function
+        raw_scores = model.decision_function(X_test)
+        # Normalize to [0,1] via sigmoid
+        y_prob = 1 / (1 + np.exp(-raw_scores))
     else:
         y_prob = model.predict(X_test).astype(float)
 
@@ -243,7 +248,8 @@ def run_pipeline(
                     model.set_params(**best_params)
 
             model = train_classical_model(
-                model, name, X_train_smote, y_train_smote
+                model, name, X_train_smote, y_train_smote,
+                X_original=X_train_np, y_original=y_train_np,
             )
             all_models[name] = model
 

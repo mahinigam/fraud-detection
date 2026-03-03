@@ -24,10 +24,20 @@ class TestClassicalModels:
         weights = {0: 1.0, 1: 19.0}
         models = build_classical_models(class_weights=weights)
         for name, model in models.items():
-            model = train_classical_model(model, name, X, y)
-            proba = model.predict_proba(X[:10])
-            assert proba.shape == (10, 2)
-            assert np.all(proba >= 0) and np.all(proba <= 1)
+            model = train_classical_model(
+                model, name, X, y,
+                X_original=X, y_original=y,
+            )
+            if hasattr(model, "predict_proba"):
+                proba = model.predict_proba(X[:10])
+                assert proba.shape == (10, 2)
+                assert np.all(proba >= 0) and np.all(proba <= 1)
+            elif hasattr(model, "decision_function"):
+                scores = model.decision_function(X[:10])
+                assert scores.shape == (10,)
+            else:
+                preds = model.predict(X[:10])
+                assert preds.shape == (10,)
 
 
 class TestBoostingModels:

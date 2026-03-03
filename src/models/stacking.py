@@ -24,7 +24,7 @@ class StackingEnsemble:
     Uses parallel inference for base learner predictions.
     """
 
-    def __init__(self, base_models: dict, n_folds: int = 5):
+    def __init__(self, base_models: dict, n_folds: int = 3):
         """
         Parameters
         ----------
