@@ -26,9 +26,14 @@ var/
 
 # Virtual environments
 venv/
+.venv/
 ENV/
 env.bak/
 venv.bak/
+
+# Model outputs
+outputs/
+mlruns/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints
@@ -64,3 +69,4 @@ Thumbs.db
 # Misc
 *.env
 .env.*
+catboost_info/
