@@ -6,9 +6,9 @@ A production-grade fraud detection system implementing a three-stage Imbalance H
 
 ```
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
-│  IEEE-CIS    │     │   PaySim     │     │  Preprocess   │
-│  6.3M rows   │────▶│  6.3M rows   │────▶│  Impute/Norm  │
-│  400+ feats  │     │  11 feats    │     │  Freq Encode  │
+│  IEEE-CIS    │     │   PaySim     │     │  Preprocess  │
+│  6.3M rows   │────▶│  6.3M rows   │────▶│  Impute/Norm │
+│  400+ feats  │     │  11 feats    │     │  Freq Encode │
 └──────────────┘     └──────────────┘     └──────┬───────┘
                                                   │
                           ┌───────────────────────▼──────────────────┐
@@ -18,19 +18,19 @@ A production-grade fraud detection system implementing a three-stage Imbalance H
                           │  3. Threshold Optimization (Decision)    │
                           └───────────────────────┬──────────────────┘
                                                   │
-     ┌────────────────────────────────────────────▼────────────────────────┐
-     │                        Model Suite (10 Models)                      │
-     │  LR │ SVM-RBF │ DT │ RF │ GBM │ XGB │ LGBM │ CatBoost │ IF │ AE  │
+     ┌────────────────────────────────────────────▼───────────────────────┐
+     │                        Model Suite (10 Models)                     │
+     │  LR │ SVM-RBF │ DT │ RF │ GBM │ XGB │ LGBM │ CatBoost │ IF │ AE    │
      └────────────────────────┬───────────────────────────────────────────┘
                               │
                    ┌──────────▼──────────┐
-                   │  Stacking Ensemble   │
-                   │  XGB + LGBM + Cat    │
-                   │  → LR Meta-Learner   │
+                   │  Stacking Ensemble  │
+                   │  XGB + LGBM + Cat   │
+                   │  → LR Meta-Learner  │
                    └──────────┬──────────┘
                               │
               ┌───────────────▼───────────────┐
-              │  Evaluation & Explainability   │
+              │  Evaluation & Explainability  │
               │  PR-AUC │ SHAP │ Latency      │
               └───────────────────────────────┘
 ```
