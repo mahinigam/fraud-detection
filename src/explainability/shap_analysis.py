@@ -17,7 +17,7 @@ def generate_shap_summary(
     X: np.ndarray,
     feature_names: list | None = None,
     model_name: str = "model",
-    max_samples: int = 5000,
+    max_samples: int = 1000,
     y: np.ndarray | None = None,
 ) -> None:
     """
