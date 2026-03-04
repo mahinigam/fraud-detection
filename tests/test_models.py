@@ -4,7 +4,10 @@ Tests for the model suite.
 
 import numpy as np
 import pytest
-from src.models.classical import build_classical_models, train_classical_model
+from src.models.classical import (
+    build_classical_models, train_classical_model,
+    NystroemSVM, select_top_features,
+)
 from src.models.boosting import build_boosting_models, train_boosting_model
 from src.models.isolation_forest import IsolationForestWrapper
 from src.models.autoencoder import AutoencoderDetector
@@ -16,6 +19,48 @@ def _make_synthetic_data(n=2000, n_features=20):
     X = np.random.randn(n, n_features).astype(np.float32)
     y = np.random.choice([0, 1], n, p=[0.95, 0.05])
     return X, y
+
+
+class TestNystroemSVM:
+    """Test the Nystroem-approximated SVM pipeline."""
+
+    def test_fit_and_decision_function(self):
+        X, y = _make_synthetic_data()
+        svm = NystroemSVM(n_components=50)
+        svm.fit(X, y)
+        scores = svm.decision_function(X[:10])
+        assert scores.shape == (10,)
+
+    def test_predict_binary(self):
+        X, y = _make_synthetic_data()
+        svm = NystroemSVM(n_components=50)
+        svm.fit(X, y)
+        preds = svm.predict(X[:10])
+        assert set(preds).issubset({0, 1})
+
+    def test_with_feature_selection(self):
+        X, y = _make_synthetic_data(n_features=50)
+        # Select top 10 features
+        indices = np.array([0, 3, 5, 7, 10, 15, 20, 25, 30, 35])
+        svm = NystroemSVM(n_components=30, feature_indices=indices)
+        svm.fit(X, y)
+        preds = svm.predict(X[:10])
+        assert preds.shape == (10,)
+
+
+class TestSelectTopFeatures:
+    def test_selects_correct_count(self):
+        importances = np.random.rand(100)
+        indices = select_top_features(importances, n_features=20)
+        assert len(indices) == 20
+
+    def test_selects_highest(self):
+        importances = np.zeros(100)
+        importances[42] = 100.0
+        importances[7] = 50.0
+        indices = select_top_features(importances, n_features=2)
+        assert 42 in indices
+        assert 7 in indices
 
 
 class TestClassicalModels:

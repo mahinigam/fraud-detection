@@ -37,7 +37,7 @@ from src.ihs.class_weights import compute_inverse_class_weights, get_scale_pos_w
 from src.ihs.threshold import find_optimal_threshold
 
 # Models
-from src.models.classical import build_classical_models, train_classical_model
+from src.models.classical import build_classical_models, train_classical_model, select_top_features
 from src.models.boosting import build_boosting_models, train_boosting_model
 from src.models.isolation_forest import IsolationForestWrapper
 from src.models.autoencoder import AutoencoderDetector
@@ -56,7 +56,6 @@ logger = get_logger("main")
 
 # ─── Available model classes for tuning ──────────────────────────────────────
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
 from xgboost import XGBClassifier
@@ -65,7 +64,6 @@ from catboost import CatBoostClassifier
 
 MODEL_CLASSES = {
     "logistic_regression": LogisticRegression,
-    "svm_rbf": SVC,
     "decision_tree": DecisionTreeClassifier,
     "random_forest": RandomForestClassifier,
     "hist_gradient_boosting": HistGradientBoostingClassifier,
@@ -192,7 +190,7 @@ def run_pipeline(
         from lightgbm import LGBMClassifier as LGBM_baseline
 
         baseline_models = {
-            "logistic_regression": LR_baseline(max_iter=1000, random_state=RANDOM_STATE, n_jobs=-1),
+            "logistic_regression": LR_baseline(max_iter=1000, random_state=RANDOM_STATE),
             "xgboost": XGB_baseline(n_estimators=200, random_state=RANDOM_STATE, n_jobs=-1, verbosity=0, eval_metric="aucpr"),
             "lightgbm": LGBM_baseline(n_estimators=200, random_state=RANDOM_STATE, n_jobs=-1, verbose=-1),
         }
@@ -230,30 +228,8 @@ def run_pipeline(
         all_models = {}
         post_ihs_results = {}
 
-        # 6a: Classical models
-        classical = build_classical_models(class_weights=class_weights)
-        for name, model in classical.items():
-            if selected_models and name not in selected_models:
-                continue
-
-            # Tune if not skipping
-            if not skip_tuning and name in MODEL_CLASSES and name != "svm_rbf":
-                tuner_name = name
-                best_params = tune_model(
-                    MODEL_CLASSES[name], tuner_name,
-                    X_train_smote, y_train_smote,
-                    extra_params={"random_state": RANDOM_STATE, "class_weight": class_weights},
-                )
-                if best_params:
-                    model.set_params(**best_params)
-
-            model = train_classical_model(
-                model, name, X_train_smote, y_train_smote,
-                X_original=X_train_np, y_original=y_train_np,
-            )
-            all_models[name] = model
-
-        # 6b: Boosting models
+        # 6a: Boosting models FIRST (need LightGBM for SVM feature selection)
+        logger.info("─── 6a: Boosting Models ───")
         boosting = build_boosting_models(scale_pos_weight=scale_pos_wt)
         for name, model in boosting.items():
             if selected_models and name not in selected_models:
@@ -278,7 +254,45 @@ def run_pipeline(
             )
             all_models[name] = model
 
-        # 6c: Isolation Forest
+        # 6b: Extract feature importances from LightGBM for SVM feature selection
+        svm_feature_indices = None
+        if "lightgbm" in all_models:
+            lgbm_importances = all_models["lightgbm"].feature_importances_
+            svm_feature_indices = select_top_features(lgbm_importances)
+            logger.info(f"SVM will use top-{len(svm_feature_indices)} features from LightGBM")
+        elif "xgboost" in all_models:
+            xgb_importances = all_models["xgboost"].feature_importances_
+            svm_feature_indices = select_top_features(xgb_importances)
+            logger.info(f"SVM will use top-{len(svm_feature_indices)} features from XGBoost")
+
+        # 6c: Classical models (with SVM feature indices)
+        logger.info("─── 6c: Classical Models ───")
+        classical = build_classical_models(
+            class_weights=class_weights,
+            svm_feature_indices=svm_feature_indices,
+        )
+        for name, model in classical.items():
+            if selected_models and name not in selected_models:
+                continue
+
+            # Tune if not skipping (skip SVM — it uses its own Nystroem pipeline)
+            if not skip_tuning and name in MODEL_CLASSES and name != "svm_rbf":
+                tuner_name = name
+                best_params = tune_model(
+                    MODEL_CLASSES[name], tuner_name,
+                    X_train_smote, y_train_smote,
+                    extra_params={"random_state": RANDOM_STATE, "class_weight": class_weights},
+                )
+                if best_params:
+                    model.set_params(**best_params)
+
+            model = train_classical_model(
+                model, name, X_train_smote, y_train_smote,
+                X_original=X_train_np, y_original=y_train_np,
+            )
+            all_models[name] = model
+
+        # 6d: Isolation Forest
         if not selected_models or "isolation_forest" in selected_models:
             iso_forest = IsolationForestWrapper(
                 n_estimators=200,
@@ -287,7 +301,7 @@ def run_pipeline(
             iso_forest.fit(X_train_np)  # Unsupervised
             all_models["isolation_forest"] = iso_forest
 
-        # 6d: Autoencoder
+        # 6e: Autoencoder
         if not selected_models or "autoencoder" in selected_models:
             ae = AutoencoderDetector(input_dim=X_train_np.shape[1])
             ae.fit(X_train_np, y_train_np)
@@ -302,11 +316,16 @@ def run_pipeline(
         for name, model in all_models.items():
             if hasattr(model, "predict_proba"):
                 y_prob = model.predict_proba(X_test_np)[:, 1]
-                t_youden = find_optimal_threshold(y_test_np, y_prob, method="youden")
-                t_f1 = find_optimal_threshold(y_test_np, y_prob, method="f1")
-                # Use F1-optimized threshold
-                optimal_thresholds[name] = t_f1
-                logger.info(f"  {name}: Youden={t_youden:.4f}, F1={t_f1:.4f} (using F1)")
+            elif hasattr(model, "decision_function"):
+                raw = model.decision_function(X_test_np)
+                y_prob = 1 / (1 + np.exp(-raw))
+            else:
+                continue
+
+            t_youden = find_optimal_threshold(y_test_np, y_prob, method="youden")
+            t_f1 = find_optimal_threshold(y_test_np, y_prob, method="f1")
+            optimal_thresholds[name] = t_f1
+            logger.info(f"  {name}: Youden={t_youden:.4f}, F1={t_f1:.4f} (using F1)")
 
         # ── Step 8: Evaluation ───────────────────────────────────────────
         logger.info("=" * 70)

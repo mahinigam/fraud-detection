@@ -35,6 +35,8 @@ SMOTE_CONFIG = {
 
 # ─── SVM Subsampling ────────────────────────────────────────────────────────
 SVM_SUBSAMPLE_SIZE = 50_000
+SVM_N_FEATURES = 50           # Top features via LightGBM importance
+SVM_NYSTROEM_COMPONENTS = 300  # Nystroem RBF kernel approximation components
 
 
 # ─── Device Configuration ───────────────────────────────────────────────────
