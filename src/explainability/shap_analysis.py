@@ -18,6 +18,7 @@ def generate_shap_summary(
     feature_names: list | None = None,
     model_name: str = "model",
     max_samples: int = 5000,
+    y: np.ndarray | None = None,
 ) -> None:
     """
     Generate SHAP Summary Plot (global feature importance).
@@ -34,10 +35,17 @@ def generate_shap_summary(
     """
     logger.info(f"Generating SHAP summary for {model_name} ...")
 
-    # Subsample for speed
+    # Stratified subsample for speed
     if len(X) > max_samples:
-        idx = np.random.choice(len(X), max_samples, replace=False)
-        X_explain = X[idx]
+        if y is not None:
+            from sklearn.model_selection import train_test_split
+            X_explain, _, _, _ = train_test_split(
+                X, y, train_size=max_samples, stratify=y, random_state=42,
+            )
+        else:
+            idx = np.random.RandomState(42).choice(len(X), max_samples, replace=False)
+            X_explain = X[idx]
+        logger.info(f"  SHAP subsampled to {len(X_explain):,} rows (from {len(X):,})")
     else:
         X_explain = X
 
@@ -104,7 +112,8 @@ def generate_shap_force_plot(
     try:
         explainer = shap.TreeExplainer(model)
     except Exception:
-        background = shap.kmeans(X[:500], 50)
+        bg_data = X[:min(500, len(X))]
+        background = shap.kmeans(bg_data, 50)
         explainer = shap.KernelExplainer(
             lambda x: model.predict_proba(x)[:, 1],
             background,
@@ -158,7 +167,7 @@ def explain_model(
         Number of force plots to generate.
     """
     # Global: Summary plot
-    generate_shap_summary(model, X_test, feature_names, model_name)
+    generate_shap_summary(model, X_test, feature_names, model_name, y=y_test)
 
     # Local: Force plots for fraud transactions
     if y_test is not None:
