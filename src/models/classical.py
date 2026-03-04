@@ -191,7 +191,7 @@ def build_classical_models(
             random_state=RANDOM_STATE,
         ),
         "random_forest": RandomForestClassifier(
-            n_estimators=200,
+            n_estimators=100,
             class_weight=class_weights,
             random_state=RANDOM_STATE,
             n_jobs=-1,
