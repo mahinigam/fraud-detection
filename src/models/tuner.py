@@ -52,6 +52,7 @@ def tune_model(
     n_trials: int = OPTUNA_N_TRIALS,
     timeout: int = OPTUNA_TIMEOUT,
     extra_params: dict | None = None,
+    max_tuning_samples: int = 100_000,
 ) -> dict:
     """
     Bayesian optimization for a single model using Optuna.
@@ -81,6 +82,17 @@ def tune_model(
         return {}
 
     logger.info(f"Tuning {model_name} ({n_trials} trials, {timeout}s timeout) ...")
+
+    # Subsample for tuning speed — full data is used for final training
+    if len(X_train) > max_tuning_samples:
+        from sklearn.model_selection import train_test_split
+        X_train, _, y_train, _ = train_test_split(
+            X_train, y_train,
+            train_size=max_tuning_samples,
+            stratify=y_train,
+            random_state=RANDOM_STATE,
+        )
+        logger.info(f"  Tuning subsampled to {len(X_train):,} rows for speed")
 
     def objective(trial):
         params = _suggest_params(trial, search_space)
@@ -116,7 +128,7 @@ def tune_model(
         sampler=optuna.samplers.TPESampler(seed=RANDOM_STATE),
         pruner=optuna.pruners.MedianPruner(),
     )
-    study.optimize(objective, n_trials=n_trials, timeout=timeout)
+    study.optimize(objective, n_trials=n_trials, timeout=timeout, catch=(Exception,))
 
     best_params = study.best_params
     logger.info(f"  Best PR-AUC: {study.best_value:.4f}")

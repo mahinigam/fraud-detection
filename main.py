@@ -238,8 +238,19 @@ def run_pipeline(
             if not skip_tuning and name in MODEL_CLASSES:
                 tuner_name = name
                 extra = {"random_state": RANDOM_STATE}
-                if name in ("xgboost", "lightgbm"):
+                if name == "xgboost":
                     extra["scale_pos_weight"] = scale_pos_wt
+                    extra["verbosity"] = 0
+                    extra["eval_metric"] = "aucpr"
+                elif name == "lightgbm":
+                    extra["scale_pos_weight"] = scale_pos_wt
+                    extra["verbose"] = -1
+                elif name == "catboost":
+                    # CatBoost uses random_seed, not random_state
+                    del extra["random_state"]
+                    extra["random_seed"] = RANDOM_STATE
+                    extra["verbose"] = 0
+                    extra["auto_class_weights"] = "Balanced"
                 best_params = tune_model(
                     MODEL_CLASSES[name], tuner_name,
                     X_train_smote, y_train_smote,
@@ -278,10 +289,15 @@ def run_pipeline(
             # Tune if not skipping (skip SVM — it uses its own Nystroem pipeline)
             if not skip_tuning and name in MODEL_CLASSES and name != "svm_rbf":
                 tuner_name = name
+                # HistGBM accepts class_weight="balanced" (string), not a dict
+                if name == "hist_gradient_boosting":
+                    extra_cls = {"random_state": RANDOM_STATE, "class_weight": "balanced"}
+                else:
+                    extra_cls = {"random_state": RANDOM_STATE, "class_weight": class_weights}
                 best_params = tune_model(
                     MODEL_CLASSES[name], tuner_name,
                     X_train_smote, y_train_smote,
-                    extra_params={"random_state": RANDOM_STATE, "class_weight": class_weights},
+                    extra_params=extra_cls,
                 )
                 if best_params:
                     model.set_params(**best_params)
