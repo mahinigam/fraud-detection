@@ -55,8 +55,19 @@ class StackingEnsemble:
         for i, (name, model) in enumerate(self.base_models.items()):
             logger.info(f"  Generating OOF predictions for {name} ...")
             try:
+                # Clone model for OOF to avoid mutating the fitted model.
+                # Strip early_stopping_rounds for XGBoost — cross_val_predict
+                # re-fits models without eval_set, which early stopping requires.
+                from sklearn.base import clone
+                oof_model = clone(model)
+
+                # Remove early_stopping_rounds if present (XGBoost)
+                if hasattr(oof_model, 'early_stopping_rounds') and oof_model.early_stopping_rounds is not None:
+                    logger.info(f"    Stripping early_stopping_rounds for OOF (was {oof_model.early_stopping_rounds})")
+                    oof_model.set_params(early_stopping_rounds=None)
+
                 oof_preds = cross_val_predict(
-                    model, X_train, y_train,
+                    oof_model, X_train, y_train,
                     cv=self.n_folds,
                     method="predict_proba",
                     n_jobs=-1,
