@@ -387,8 +387,10 @@ def run_pipeline(
             logger.info("  STEP 11: SHAP EXPLAINABILITY")
             logger.info("=" * 70)
 
-            # Focus SHAP on tree-based models
-            shap_models = ["xgboost", "lightgbm", "catboost", "random_forest"]
+            # Focus SHAP on top-3 boosted models (primary fraud detectors)
+            # RF excluded: sklearn TreeExplainer is orders of magnitude slower
+            # and RF is not a decision-making model in the stacking ensemble.
+            shap_models = ["xgboost", "lightgbm", "catboost"]
             for name in shap_models:
                 if name in all_models:
                     try:
