@@ -22,7 +22,7 @@ import mlflow
 
 from config.settings import (
     OUTPUTS, DATA_PROCESSED, RANDOM_STATE,
-    DEVICE, get_logger,
+    DEVICE, get_logger, set_global_seeds
 )
 
 # Data pipeline
@@ -135,6 +135,8 @@ def run_pipeline(
     mlflow.set_experiment(f"fraud_detection_{dataset_name}")
 
     with mlflow.start_run(run_name=f"{dataset_name}_pipeline"):
+        set_global_seeds(RANDOM_STATE)
+
         # ── Step 1: Data Loading ─────────────────────────────────────────
         logger.info("=" * 70)
         logger.info("  STEP 1: DATA LOADING")
@@ -227,6 +229,7 @@ def run_pipeline(
 
         all_models = {}
         post_ihs_results = {}
+        all_best_params = {}
 
         # 6a: Boosting models FIRST (need LightGBM for SVM feature selection)
         logger.info("─── 6a: Boosting Models ───")
@@ -251,13 +254,16 @@ def run_pipeline(
                     extra["random_seed"] = RANDOM_STATE
                     extra["verbose"] = 0
                     extra["auto_class_weights"] = "Balanced"
-                best_params = tune_model(
+                best_params, study = tune_model(
                     MODEL_CLASSES[name], tuner_name,
                     X_train_smote, y_train_smote,
                     extra_params=extra,
                 )
                 if best_params:
                     model.set_params(**best_params)
+                    all_best_params[name] = best_params
+                if study:
+                    joblib.dump(study, OUTPUTS / f"optuna_study_{dataset_name}_{name}.pkl")
 
             model = train_boosting_model(
                 model, name, X_train_smote, y_train_smote,
@@ -294,13 +300,16 @@ def run_pipeline(
                     extra_cls = {"random_state": RANDOM_STATE, "class_weight": "balanced"}
                 else:
                     extra_cls = {"random_state": RANDOM_STATE, "class_weight": class_weights}
-                best_params = tune_model(
+                best_params, study = tune_model(
                     MODEL_CLASSES[name], tuner_name,
                     X_train_smote, y_train_smote,
                     extra_params=extra_cls,
                 )
                 if best_params:
                     model.set_params(**best_params)
+                    all_best_params[name] = best_params
+                if study:
+                    joblib.dump(study, OUTPUTS / f"optuna_study_{dataset_name}_{name}.pkl")
 
             model = train_classical_model(
                 model, name, X_train_smote, y_train_smote,
@@ -329,6 +338,8 @@ def run_pipeline(
         logger.info("=" * 70)
 
         optimal_thresholds = {}
+        predictions_df = pd.DataFrame({"y_test": y_test_np})
+
         for name, model in all_models.items():
             if hasattr(model, "predict_proba"):
                 y_prob = model.predict_proba(X_test_np)[:, 1]
@@ -338,6 +349,7 @@ def run_pipeline(
             else:
                 continue
 
+            predictions_df[name] = y_prob
             t_youden = find_optimal_threshold(y_test_np, y_prob, method="youden")
             t_f1 = find_optimal_threshold(y_test_np, y_prob, method="f1")
             optimal_thresholds[name] = t_f1
@@ -376,6 +388,8 @@ def run_pipeline(
 
             # Threshold optimization for stacking
             y_prob_stack = stacking.predict_proba(X_test_np)[:, 1]
+            predictions_df["stacking_ensemble"] = y_prob_stack
+
             t_stack = find_optimal_threshold(y_test_np, y_prob_stack, method="f1")
             optimal_thresholds["stacking_ensemble"] = t_stack
 
@@ -443,6 +457,16 @@ def run_pipeline(
         thresh_path = OUTPUTS / f"thresholds_{dataset_name}.json"
         with open(thresh_path, "w") as f:
             json.dump(optimal_thresholds, f, indent=2, default=str)
+
+        # Save best hyperparameters
+        params_path = OUTPUTS / f"best_params_{dataset_name}.json"
+        with open(params_path, "w") as f:
+            json.dump(all_best_params, f, indent=2, default=str)
+
+        # Save raw predictions for figure generation (ROC/PR curves, etc)
+        preds_path = OUTPUTS / f"predictions_{dataset_name}.csv"
+        predictions_df.to_csv(preds_path, index=False)
+        logger.info(f"Raw predictions saved to {preds_path}")
 
         elapsed = time.time() - start_time
         logger.info(f"\n{'='*70}")

@@ -73,13 +73,13 @@ def tune_model(
 
     Returns
     -------
-    dict
-        Best hyperparameters found.
+    tuple[dict, optuna.Study | None]
+        (best hyperparameters, Optuna study object)
     """
     search_space = SEARCH_SPACES.get(model_name)
     if search_space is None:
         logger.warning(f"No search space for '{model_name}', skipping tuning.")
-        return {}
+        return {}, None
 
     logger.info(f"Tuning {model_name} ({n_trials} trials, {timeout}s timeout) ...")
 
@@ -134,4 +134,4 @@ def tune_model(
     logger.info(f"  Best PR-AUC: {study.best_value:.4f}")
     logger.info(f"  Best params: {best_params}")
 
-    return best_params
+    return best_params, study

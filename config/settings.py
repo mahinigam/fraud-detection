@@ -141,6 +141,17 @@ BENCHMARK_N_SAMPLES = 1000
 # ─── Random Seed ─────────────────────────────────────────────────────────────
 RANDOM_STATE = 42
 
+import random
+import numpy as np
+
+def set_global_seeds(seed: int = RANDOM_STATE):
+    """Enforce reproducibility across all libraries."""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
 import logging
