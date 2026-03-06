@@ -376,8 +376,15 @@ def run_pipeline(
         logger.info("  STEP 9: STACKING ENSEMBLE")
         logger.info("=" * 70)
 
+        # Dynamically select top 3 models by PR-AUC (exclude unsupervised/weak models)
+        supervised_results = {k: v for k, v in post_ihs_results.items() if k not in ["autoencoder", "isolation_forest", "svm_rbf"]}
+        sorted_models = sorted(supervised_results.items(), key=lambda x: x[1].get("pr_auc", 0.0), reverse=True)
+        top_model_names = [name for name, _ in sorted_models[:3]]
+        
+        logger.info(f"  Selected top 3 base models for stacking: {top_model_names}")
+        
         stacking_base = {}
-        for name in ["xgboost", "lightgbm", "catboost"]:
+        for name in top_model_names:
             if name in all_models:
                 stacking_base[name] = all_models[name]
 
