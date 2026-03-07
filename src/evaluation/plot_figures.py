@@ -21,6 +21,20 @@ plt.style.use('seaborn-v0_8-whitegrid')
 sns.set_context("paper", font_scale=1.5)
 COLORS = sns.color_palette("Set2")
 
+MODEL_LABELS = {
+    "hist_gradient_boosting": "HistGBM",
+    "xgboost": "XGBoost",
+    "lightgbm": "LightGBM",
+    "catboost": "CatBoost",
+    "logistic_regression": "Logistic Regression",
+    "svm_rbf": "SVM",
+    "decision_tree": "Decision Tree",
+    "random_forest": "Random Forest",
+    "isolation_forest": "Isolation Forest",
+    "autoencoder": "Autoencoder",
+    "stacking_ensemble": "Stacking Ensemble"
+}
+
 def load_data(dataset: str):
     """Load predictions and optimal thresholds."""
     preds_path = OUTPUTS / f"predictions_{dataset}.csv"
@@ -47,8 +61,9 @@ def plot_pr_curves(df, models, dataset):
         precision, recall, _ = precision_recall_curve(y_true, y_prob)
         pr_auc = auc(recall, precision)
         
+        label_name = MODEL_LABELS.get(model, model)
         plt.plot(recall, precision, color=COLORS[i % len(COLORS)], lw=2,
-                 label=f"{model} (AUC = {pr_auc:.4f})")
+                 label=f"{label_name} (AUC = {pr_auc:.4f})")
 
     # Baseline
     baseline = y_true.mean()
@@ -75,8 +90,9 @@ def plot_roc_curves(df, models, dataset):
         fpr, tpr, _ = roc_curve(y_true, y_prob)
         roc_auc = auc(fpr, tpr)
         
+        label_name = MODEL_LABELS.get(model, model)
         plt.plot(fpr, tpr, color=COLORS[i % len(COLORS)], lw=2,
-                 label=f"{model} (AUC = {roc_auc:.4f})")
+                 label=f"{label_name} (AUC = {roc_auc:.4f})")
 
     plt.plot([0, 1], [0, 1], color='gray', lw=2, linestyle='--', label='Random Classifier')
     plt.xlabel('False Positive Rate')
@@ -106,9 +122,11 @@ def plot_threshold_optimization(df, model, threshold, dataset):
     plt.axvline(x=threshold, color='red', linestyle='--', lw=2, 
                 label=f'Optimal Threshold = {threshold:.3f}')
     
+    
+    label_name = MODEL_LABELS.get(model, model)
     plt.xlabel('Decision Threshold')
     plt.ylabel('F1 Score')
-    plt.title(f'Threshold Optimization: {model} ({dataset.upper()})')
+    plt.title(f'Threshold Optimization: {label_name} ({dataset.upper()})')
     plt.legend(loc="lower right")
     plt.tight_layout()
     plt.savefig(OUTPUTS / f"threshold_opt_{model}_{dataset}.png", dpi=300)
@@ -126,9 +144,10 @@ def plot_confusion_matrix(df, model, threshold, dataset):
     disp = ConfusionMatrixDisplay(confusion_matrix=cm, 
                                   display_labels=["Legitimate", "Fraud"])
     
+    label_name = MODEL_LABELS.get(model, model)
     fig, ax = plt.subplots(figsize=(8, 6))
     disp.plot(cmap="Blues", values_format="d", ax=ax)
-    plt.title(f'Confusion Matrix: {model} (t={threshold:.3f})\n{dataset.upper()}')
+    plt.title(f'Confusion Matrix: {label_name} (t={threshold:.3f})\n{dataset.upper()}')
     plt.tight_layout()
     plt.savefig(OUTPUTS / f"cm_{model}_{dataset}.png", dpi=300)
     plt.close()
@@ -144,7 +163,8 @@ def plot_calibration_curves(df, models, dataset):
         y_prob = df[model]
         prob_true, prob_pred = calibration_curve(y_true, y_prob, n_bins=10)
         
-        plt.plot(prob_pred, prob_true, marker='o', lw=2, color=COLORS[i % len(COLORS)], label=model)
+        label_name = MODEL_LABELS.get(model, model)
+        plt.plot(prob_pred, prob_true, marker='o', lw=2, color=COLORS[i % len(COLORS)], label=label_name)
 
     plt.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Perfectly Calibrated')
     plt.xlabel('Mean Predicted Probability')
@@ -171,10 +191,14 @@ def plot_ihs_improvement(dataset):
     ax.bar(x - width/2, df["pre_pr_auc"], width, label='Pre-IHS', color=COLORS[0])
     ax.bar(x + width/2, df["post_pr_auc"], width, label='Post-IHS', color=COLORS[1])
     
+    
+    # Map index names
+    formatted_labels = [MODEL_LABELS.get(idx, idx) for idx in df.index]
+    
     ax.set_ylabel('PR-AUC Score')
     ax.set_title(f'Imbalance Handling Strategy Lift ({dataset.upper()})')
     ax.set_xticks(x)
-    ax.set_xticklabels(df.index, rotation=45, ha="right")
+    ax.set_xticklabels(formatted_labels, rotation=45, ha="right")
     ax.legend()
     
     plt.tight_layout()
@@ -189,7 +213,7 @@ def main():
     datasets = ["ieee", "paysim"] if args.dataset == "both" else [args.dataset]
     
     # Models to plot for comparison
-    models_to_plot = ["xgboost", "lightgbm", "catboost", "stacking_ensemble"]
+    models_to_plot = ["hist_gradient_boosting", "xgboost", "lightgbm", "catboost", "stacking_ensemble"]
 
     for ds in datasets:
         print(f"Generating figures for {ds.upper()}...")

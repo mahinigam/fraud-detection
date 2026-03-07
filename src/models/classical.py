@@ -158,6 +158,7 @@ def _prepare_svm_data(X_original, y_original, n_samples=SVM_SUBSAMPLE_SIZE):
 def build_classical_models(
     class_weights: dict | None = None,
     svm_feature_indices: np.ndarray | None = None,
+    dataset_name: str = "ieee",
 ) -> dict:
     """
     Build dictionary of classical model instances.
@@ -174,6 +175,22 @@ def build_classical_models(
     dict
         {model_name: model_instance}
     """
+    
+    if dataset_name == "paysim":
+        from sklearn.linear_model import SGDClassifier
+        from sklearn.pipeline import Pipeline
+        from sklearn.preprocessing import StandardScaler
+        svm_model = Pipeline([
+            ("scaler", StandardScaler()),
+            ("sgd", SGDClassifier(loss="hinge", class_weight="balanced", random_state=RANDOM_STATE))
+        ])
+    else:
+        svm_model = NystroemSVM(
+            n_components=SVM_NYSTROEM_COMPONENTS,
+            feature_indices=svm_feature_indices,
+            class_weight="balanced",
+        )
+
     models = {
         "logistic_regression": LogisticRegression(
             class_weight=class_weights,
@@ -181,11 +198,8 @@ def build_classical_models(
             max_iter=1000,
             random_state=RANDOM_STATE,
         ),
-        "svm_rbf": NystroemSVM(
-            n_components=SVM_NYSTROEM_COMPONENTS,
-            feature_indices=svm_feature_indices,
-            class_weight="balanced",
-        ),
+        "svm_rbf": svm_model,
+
         "decision_tree": DecisionTreeClassifier(
             class_weight=class_weights,
             random_state=RANDOM_STATE,
@@ -236,7 +250,11 @@ def train_classical_model(
             X_fit, y_fit = _prepare_svm_data(X_original, y_original)
         else:
             X_fit, y_fit = _prepare_svm_data(X_train, y_train)
-        logger.info(f"Training {model_name} (Nystroem-approximated) on {len(X_fit):,} samples ...")
+            
+        if hasattr(model, "feature_indices"):
+            logger.info(f"Training {model_name} (Nystroem-approximated) on {len(X_fit):,} samples ...")
+        else:
+            logger.info(f"Training {model_name} (Standard SGD) on {len(X_fit):,} samples ...")
         model.fit(X_fit, y_fit)
     elif sample_weight is not None:
         logger.info(f"Training {model_name} with sample_weight ...")

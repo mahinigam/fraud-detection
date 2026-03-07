@@ -186,20 +186,34 @@ def run_pipeline(
 
         pre_ihs_results = {}
 
-        # Quick baseline with a few models (no IHS)
-        from sklearn.linear_model import LogisticRegression as LR_baseline
-        from xgboost import XGBClassifier as XGB_baseline
-        from lightgbm import LGBMClassifier as LGBM_baseline
-
-        baseline_models = {
-            "logistic_regression": LR_baseline(max_iter=1000, random_state=RANDOM_STATE),
-            "xgboost": XGB_baseline(n_estimators=200, random_state=RANDOM_STATE, n_jobs=-1, verbosity=0, eval_metric="aucpr"),
-            "lightgbm": LGBM_baseline(n_estimators=200, random_state=RANDOM_STATE, n_jobs=-1, verbose=-1),
-        }
+        # Baseline with all models (no IHS)
+        baseline_boosting = build_boosting_models(scale_pos_weight=1.0)
+        baseline_classical = build_classical_models(class_weights=None, svm_feature_indices=None, dataset_name=dataset_name)
+        
+        baseline_models = {**baseline_boosting, **baseline_classical}
+        baseline_models["isolation_forest"] = IsolationForestWrapper()
+        
+        input_dim = X_train_np.shape[1]
+        baseline_models["autoencoder"] = AutoencoderDetector(input_dim=input_dim)
 
         for name, model in baseline_models.items():
+            if selected_models and name not in selected_models:
+                continue
+
             logger.info(f"Training baseline {name} (no IHS) ...")
-            model.fit(X_train_np, y_train_np)
+            if name == "autoencoder":
+                legit_mask = (y_train_np == 0)
+                model.fit(X_train_np[legit_mask], y_train_np[legit_mask])
+            elif name == "svm_rbf":
+                if hasattr(model, "feature_indices"):
+                    model.fit(X_train_np, y_train_np)
+                else:
+                    model.fit(X_train_np, y_train_np)
+            elif name in ["xgboost", "lightgbm", "catboost"]:
+                train_boosting_model(model, name, X_train_np, y_train_np, X_test_np, y_test_np)
+            else:
+                model.fit(X_train_np, y_train_np)
+
             pre_ihs_results[name] = _evaluate_model(
                 model, f"{name} (pre-IHS)", X_test_np, y_test_np
             )
@@ -211,6 +225,15 @@ def run_pipeline(
 
         # 5a: SMOTE on training partition only
         X_train_smote, y_train_smote = apply_smote(X_train_np, y_train_np)
+
+        # ENFORCE STRICT NUMPY ARRAYS 
+        # Guarantee no pandas dataframes leak into model fit methods (Prevents LightGBM OOF bug)
+        X_train_smote = np.asarray(X_train_smote, dtype=np.float32)
+        y_train_smote = np.asarray(y_train_smote, dtype=int)
+        X_train_np = np.asarray(X_train_np, dtype=np.float32)
+        X_test_np = np.asarray(X_test_np, dtype=np.float32)
+        y_train_np = np.asarray(y_train_np, dtype=int)
+        y_test_np = np.asarray(y_test_np, dtype=int)
 
         # 5b: Compute class weights (on original training data for algorithm-level IHS)
         class_weights = compute_inverse_class_weights(y_train_np)
