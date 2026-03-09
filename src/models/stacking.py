@@ -70,7 +70,7 @@ class StackingEnsemble:
                     oof_model, X_train, y_train,
                     cv=self.n_folds,
                     method="predict_proba",
-                    n_jobs=-1,
+                    n_jobs=1,
                 )
                 meta_features[:, i] = oof_preds[:, 1]
             except Exception as e:
