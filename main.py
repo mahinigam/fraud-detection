@@ -30,6 +30,7 @@ from src.data.ieee_loader import load_ieee_cis, get_ieee_target_and_features
 from src.data.paysim_loader import load_paysim, get_paysim_target_and_features
 from src.data.splitter import chronological_split
 from src.data.preprocessor import FraudPreprocessor
+from src.data.feature_engineering import engineer_features
 
 # IHS
 from src.ihs.smote import apply_smote
@@ -113,6 +114,10 @@ def run_pipeline(
     selected_models: list | None = None,
     skip_shap: bool = False,
     skip_benchmark: bool = False,
+    use_smote: bool = True,
+    use_class_weights: bool = True,
+    use_threshold_opt: bool = True,
+    ablation_tag: str = "",
 ):
     """
     Run the complete fraud detection pipeline.
@@ -129,6 +134,14 @@ def run_pipeline(
         Skip SHAP analysis
     skip_benchmark : bool
         Skip latency benchmarking
+    use_smote : bool
+        Apply SMOTE oversampling (ablation control)
+    use_class_weights : bool
+        Apply class-weighted training (ablation control)
+    use_threshold_opt : bool
+        Apply threshold optimization (ablation control)
+    ablation_tag : str
+        Tag for ablation output files (e.g. 'smote_only')
     """
     start_time = time.time()
 
@@ -163,6 +176,16 @@ def run_pipeline(
         X_test_processed = preprocessor.transform(X_test)
 
         # Align columns (one-hot encoding may create different columns)
+        common_cols = X_train_processed.columns.intersection(X_test_processed.columns)
+        X_train_processed = X_train_processed[common_cols]
+        X_test_processed = X_test_processed[common_cols]
+
+        # ── Step 3b: Feature Engineering ────────────────────────────────
+        logger.info("─── 3b: Feature Engineering ───")
+        X_train_processed = engineer_features(X_train_processed)
+        X_test_processed = engineer_features(X_test_processed)
+
+        # Re-align after feature engineering
         common_cols = X_train_processed.columns.intersection(X_test_processed.columns)
         X_train_processed = X_train_processed[common_cols]
         X_test_processed = X_test_processed[common_cols]
@@ -221,13 +244,17 @@ def run_pipeline(
         # ── Step 5: IHS — SMOTE + Class Weights ─────────────────────────
         logger.info("=" * 70)
         logger.info("  STEP 5: IMBALANCE HANDLING STRATEGY (IHS)")
+        logger.info(f"    SMOTE={use_smote}, ClassWeights={use_class_weights}, ThresholdOpt={use_threshold_opt}")
         logger.info("=" * 70)
 
-        # 5a: SMOTE on training partition only
-        X_train_smote, y_train_smote = apply_smote(X_train_np, y_train_np)
+        # 5a: SMOTE on training partition only (respects ablation flag)
+        if use_smote:
+            X_train_smote, y_train_smote = apply_smote(X_train_np, y_train_np)
+        else:
+            logger.info("SMOTE DISABLED (ablation mode)")
+            X_train_smote, y_train_smote = X_train_np.copy(), y_train_np.copy()
 
         # ENFORCE STRICT NUMPY ARRAYS 
-        # Guarantee no pandas dataframes leak into model fit methods (Prevents LightGBM OOF bug)
         X_train_smote = np.asarray(X_train_smote, dtype=np.float32)
         y_train_smote = np.asarray(y_train_smote, dtype=int)
         X_train_np = np.asarray(X_train_np, dtype=np.float32)
@@ -235,12 +262,19 @@ def run_pipeline(
         y_train_np = np.asarray(y_train_np, dtype=int)
         y_test_np = np.asarray(y_test_np, dtype=int)
 
-        # 5b: Compute class weights (on original training data for algorithm-level IHS)
-        class_weights = compute_inverse_class_weights(y_train_np)
-        scale_pos_wt = get_scale_pos_weight(y_train_np)
+        # 5b: Compute class weights (respects ablation flag)
+        if use_class_weights:
+            class_weights = compute_inverse_class_weights(y_train_np)
+            scale_pos_wt = get_scale_pos_weight(y_train_np)
+        else:
+            logger.info("CLASS WEIGHTS DISABLED (ablation mode)")
+            class_weights = None
+            scale_pos_wt = 1.0
 
         mlflow.log_params({
-            "smote_applied": True,
+            "smote_applied": use_smote,
+            "class_weights_applied": use_class_weights,
+            "threshold_opt_applied": use_threshold_opt,
             "train_size_after_smote": len(X_train_smote),
             "scale_pos_weight": scale_pos_wt,
         })
@@ -373,10 +407,14 @@ def run_pipeline(
                 continue
 
             predictions_df[name] = y_prob
-            t_youden = find_optimal_threshold(y_test_np, y_prob, method="youden")
-            t_f1 = find_optimal_threshold(y_test_np, y_prob, method="f1")
-            optimal_thresholds[name] = t_f1
-            logger.info(f"  {name}: Youden={t_youden:.4f}, F1={t_f1:.4f} (using F1)")
+            if use_threshold_opt:
+                t_youden = find_optimal_threshold(y_test_np, y_prob, method="youden")
+                t_f1 = find_optimal_threshold(y_test_np, y_prob, method="f1")
+                optimal_thresholds[name] = t_f1
+                logger.info(f"  {name}: Youden={t_youden:.4f}, F1={t_f1:.4f} (using F1)")
+            else:
+                optimal_thresholds[name] = 0.5
+                logger.info(f"  {name}: threshold=0.5 (ablation mode)")
 
         # ── Step 8: Evaluation ───────────────────────────────────────────
         logger.info("=" * 70)
@@ -479,17 +517,18 @@ def run_pipeline(
             logger.info(f"Latency results saved to {latency_path}")
 
         # ── Save Results ─────────────────────────────────────────────────
-        results_path = OUTPUTS / f"results_{dataset_name}.json"
+        tag = f"_{ablation_tag}" if ablation_tag else ""
+        results_path = OUTPUTS / f"results_{dataset_name}{tag}.json"
         with open(results_path, "w") as f:
             json.dump(post_ihs_results, f, indent=2, default=str)
 
         # Save optimal thresholds
-        thresh_path = OUTPUTS / f"thresholds_{dataset_name}.json"
+        thresh_path = OUTPUTS / f"thresholds_{dataset_name}{tag}.json"
         with open(thresh_path, "w") as f:
             json.dump(optimal_thresholds, f, indent=2, default=str)
 
         # Save best hyperparameters
-        params_path = OUTPUTS / f"best_params_{dataset_name}.json"
+        params_path = OUTPUTS / f"best_params_{dataset_name}{tag}.json"
         with open(params_path, "w") as f:
             json.dump(all_best_params, f, indent=2, default=str)
 
@@ -548,6 +587,28 @@ Examples:
         action="store_true",
         help="Skip latency benchmarking",
     )
+    # Ablation flags
+    parser.add_argument(
+        "--no-smote",
+        action="store_true",
+        help="Ablation: disable SMOTE oversampling",
+    )
+    parser.add_argument(
+        "--no-class-weights",
+        action="store_true",
+        help="Ablation: disable class-weighted training",
+    )
+    parser.add_argument(
+        "--no-threshold-opt",
+        action="store_true",
+        help="Ablation: disable threshold optimization (use 0.5)",
+    )
+    parser.add_argument(
+        "--ablation-tag",
+        type=str,
+        default="",
+        help="Tag for ablation output files (e.g. 'smote_only')",
+    )
 
     args = parser.parse_args()
 
@@ -564,6 +625,10 @@ Examples:
             selected_models=args.models,
             skip_shap=args.skip_shap,
             skip_benchmark=args.skip_benchmark,
+            use_smote=not args.no_smote,
+            use_class_weights=not args.no_class_weights,
+            use_threshold_opt=not args.no_threshold_opt,
+            ablation_tag=args.ablation_tag,
         )
 
 

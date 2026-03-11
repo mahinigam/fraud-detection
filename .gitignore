@@ -70,3 +70,33 @@ Thumbs.db
 *.env
 .env.*
 catboost_info/
+
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.out
+*.toc
+*.lof
+*.lot
+*.synctex.gz
+*.nav
+*.snm
+*.vrb
+*.tex
+*.pdf
+
+# Figures (generated plots)
+figures/
+
+# Data files
+/data/
+
+# Model files
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
