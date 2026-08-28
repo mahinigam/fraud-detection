@@ -32,7 +32,11 @@ env.bak/
 venv.bak/
 
 # Model outputs
-outputs/
+outputs/*
+!outputs/model_paysim_catboost.pkl
+!outputs/thresholds_paysim.json
+!outputs/results_paysim.json
+!outputs/ihs_comparison_paysim.csv
 mlruns/
 
 # Jupyter Notebook checkpoints
@@ -92,7 +96,8 @@ catboost_info/
 figures/
 
 # Data files
-/data/
+/data/*
+!data/processed/preprocessor_paysim.pkl
 
 # Model files
 *.pkl
@@ -100,6 +105,13 @@ figures/
 *.h5
 *.pt
 *.pth
+
+# Exceptions for Razorpay AI Buildathon Demo
+!outputs/model_paysim_catboost.pkl
+!outputs/thresholds_paysim.json
+!outputs/results_paysim.json
+!outputs/ihs_comparison_paysim.csv
+!data/processed/preprocessor_paysim.pkl
 
 # Irrelevant
 IEEE-conference-template-062824/

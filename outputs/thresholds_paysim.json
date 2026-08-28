@@ -1,0 +1,7 @@
+{
+  "xgboost": 0.9978039860725403,
+  "lightgbm": 0.9999360056493556,
+  "catboost": 0.9846037875066812,
+  "hist_gradient_boosting": 0.9811782639932071,
+  "stacking_ensemble": 1.983876463233477e-08
+}

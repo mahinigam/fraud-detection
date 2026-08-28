@@ -68,6 +68,8 @@ with col2:
             # Preprocess
             df_engineered = engineer_features(df)
             X_processed = preprocessor.transform(df_engineered)
+            if hasattr(preprocessor, "feature_names_"):
+                X_processed = X_processed.reindex(columns=preprocessor.feature_names_, fill_value=0.0)
             X_np = X_processed.values.astype("float32")
             
             # Predict

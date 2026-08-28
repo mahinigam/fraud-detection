@@ -188,6 +188,9 @@ def run_pipeline(
         X_test_processed = X_test_processed[common_cols]
 
         feature_names = common_cols.tolist()
+        
+        # Save feature_names_ to preprocessor for inference column alignment
+        preprocessor.feature_names_ = feature_names
 
         # Convert to numpy and create validation split
         X_train_full_np = X_train_processed.values.astype(np.float32)

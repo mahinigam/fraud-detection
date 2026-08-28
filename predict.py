@@ -60,10 +60,9 @@ def main():
     # For a real system, you'd align columns strictly with the training set.
     X_processed = preprocessor.transform(df_engineered)
     
-    # Extract only the columns the preprocessor fit on, to handle any mismatch
-    # (In a true prod environment, alignment logic goes in transform, but just in case)
-    if hasattr(preprocessor, "numerical_cols_") and hasattr(preprocessor, "categorical_cols_"):
-        pass
+    # Reindex columns to strictly align with training features
+    if hasattr(preprocessor, "feature_names_"):
+        X_processed = X_processed.reindex(columns=preprocessor.feature_names_, fill_value=0.0)
     
     # Convert to numpy float32
     X_np = X_processed.values.astype("float32")
