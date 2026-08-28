@@ -41,7 +41,9 @@ SVM_NYSTROEM_COMPONENTS = 300  # Nystroem RBF kernel approximation components
 
 # ─── Device Configuration ───────────────────────────────────────────────────
 def get_device():
-    """Auto-detect MPS (Apple Silicon) → CPU fallback."""
+    """Auto-detect CUDA → MPS (Apple Silicon) → CPU fallback."""
+    if torch.cuda.is_available():
+        return torch.device("cuda")
     if torch.backends.mps.is_available():
         return torch.device("mps")
     return torch.device("cpu")

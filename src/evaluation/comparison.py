@@ -45,8 +45,10 @@ def build_comparison_table(
             # Compute lift
             if pre_val > 0:
                 lift = ((post_val - pre_val) / pre_val) * 100
+            elif post_val > 0:
+                lift = np.nan
             else:
-                lift = float("inf") if post_val > 0 else 0.0
+                lift = 0.0
             row[f"lift_{metric}_%"] = lift
 
         rows.append(row)
@@ -71,8 +73,12 @@ def print_comparison(comparison_df: pd.DataFrame) -> None:
     logger.info(f"\n{summary.to_string(index=False)}")
 
     # Check targets
-    avg_recall_lift = comparison_df["lift_recall_%"].mean()
-    avg_f1_lift = comparison_df["lift_f1_score_%"].mean()
+    # Replace any potential infs with NaN, then mean() automatically drops NaNs
+    valid_recall = comparison_df["lift_recall_%"].replace([np.inf, -np.inf], np.nan)
+    avg_recall_lift = valid_recall.mean() if not valid_recall.isna().all() else 0.0
+    
+    valid_f1 = comparison_df["lift_f1_score_%"].replace([np.inf, -np.inf], np.nan)
+    avg_f1_lift = valid_f1.mean() if not valid_f1.isna().all() else 0.0
 
     logger.info(f"\n  Average Recall lift: {avg_recall_lift:.1f}% (target: 22-38%)")
     logger.info(f"  Average F1 lift:     {avg_f1_lift:.1f}% (target: 18-31%)")

@@ -30,9 +30,9 @@ def engineer_features(X: pd.DataFrame) -> pd.DataFrame:
     """
     X = X.copy()
 
-    # 1. NaN/zero count per row — proxy for data completeness
-    #    After preprocessing, NaNs are filled with 0, so count zeros
-    X["nan_count"] = (X == 0).sum(axis=1).astype(np.float32)
+    # 1. NaN count per row — proxy for data completeness
+    #    Since this runs BEFORE imputation now, count actual NaNs
+    X["nan_count"] = X.isna().sum(axis=1).astype(np.float32)
     logger.info(f"  Added nan_count feature (mean={X['nan_count'].mean():.1f})")
 
     # 2. Log-transform amount-like columns (any column with 'amt' or 'amount' in name)

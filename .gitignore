@@ -100,3 +100,6 @@ figures/
 *.h5
 *.pt
 *.pth
+
+# Irrelevant
+IEEE-conference-template-062824/

@@ -166,11 +166,18 @@ def run_pipeline(
             X, y, temporal_col=temporal_col
         )
 
-        # ── Step 3: Preprocessing ────────────────────────────────────────
+        # ── Step 3: Preprocessing & Feature Engineering ─────────────────
         logger.info("=" * 70)
-        logger.info("  STEP 3: PREPROCESSING")
+        logger.info("  STEP 3: PREPROCESSING & FEATURE ENGINEERING")
         logger.info("=" * 70)
 
+        # 3a: Feature Engineering (requires raw missing values and unscaled amounts)
+        logger.info("─── 3a: Feature Engineering ───")
+        X_train = engineer_features(X_train)
+        X_test = engineer_features(X_test)
+
+        # 3b: Preprocessing (imputation, encoding, scaling)
+        logger.info("─── 3b: Imputation & Scaling ───")
         preprocessor = FraudPreprocessor()
         X_train_processed = preprocessor.fit(X_train).transform(X_train)
         X_test_processed = preprocessor.transform(X_test)
@@ -180,22 +187,19 @@ def run_pipeline(
         X_train_processed = X_train_processed[common_cols]
         X_test_processed = X_test_processed[common_cols]
 
-        # ── Step 3b: Feature Engineering ────────────────────────────────
-        logger.info("─── 3b: Feature Engineering ───")
-        X_train_processed = engineer_features(X_train_processed)
-        X_test_processed = engineer_features(X_test_processed)
-
-        # Re-align after feature engineering
-        common_cols = X_train_processed.columns.intersection(X_test_processed.columns)
-        X_train_processed = X_train_processed[common_cols]
-        X_test_processed = X_test_processed[common_cols]
-
         feature_names = common_cols.tolist()
 
-        # Convert to numpy
-        X_train_np = X_train_processed.values.astype(np.float32)
+        # Convert to numpy and create validation split
+        X_train_full_np = X_train_processed.values.astype(np.float32)
+        y_train_full_np = y_train.values if hasattr(y_train, "values") else y_train
+        
+        val_idx = int(len(X_train_full_np) * 0.85)
+        X_train_np = X_train_full_np[:val_idx]
+        y_train_np = y_train_full_np[:val_idx]
+        X_val_np = X_train_full_np[val_idx:]
+        y_val_np = y_train_full_np[val_idx:]
+
         X_test_np = X_test_processed.values.astype(np.float32)
-        y_train_np = y_train.values if hasattr(y_train, "values") else y_train
         y_test_np = y_test.values if hasattr(y_test, "values") else y_test
 
         # Save preprocessor
@@ -233,7 +237,7 @@ def run_pipeline(
                 else:
                     model.fit(X_train_np, y_train_np)
             elif name in ["xgboost", "lightgbm", "catboost"]:
-                train_boosting_model(model, name, X_train_np, y_train_np, X_test_np, y_test_np)
+                train_boosting_model(model, name, X_train_np, y_train_np, X_val_np, y_val_np)
             else:
                 model.fit(X_train_np, y_train_np)
 
@@ -324,7 +328,7 @@ def run_pipeline(
 
             model = train_boosting_model(
                 model, name, X_train_smote, y_train_smote,
-                X_test_np, y_test_np,
+                X_val_np, y_val_np,
             )
             all_models[name] = model
 
@@ -536,6 +540,12 @@ def run_pipeline(
         preds_path = OUTPUTS / f"predictions_{dataset_name}.csv"
         predictions_df.to_csv(preds_path, index=False)
         logger.info(f"Raw predictions saved to {preds_path}")
+
+        # Save primary models for inference/demo
+        for m_name in ["catboost", "lightgbm", "xgboost", "stacking_ensemble"]:
+            if m_name in all_models:
+                joblib.dump(all_models[m_name], OUTPUTS / f"model_{dataset_name}_{m_name}.pkl")
+        logger.info("Saved primary models for inference.")
 
         elapsed = time.time() - start_time
         logger.info(f"\n{'='*70}")

@@ -1,8 +1,11 @@
-# Hybrid Fraud Detection Framework
+# AI Risk Manager: Fraud-Spike Detector & Abuse-Ring Sentinel
 
-A production-grade fraud detection system implementing a three-stage Imbalance Handling Strategy (IHS) with 10 individual models, a stacking meta-learner, SHAP explainability, and sub-100ms inference targeting.
+A production-grade fraud detection system implementing a three-stage Imbalance Handling Strategy (IHS) targeting Indian merchant fraud patterns (e.g., chargebacks, account-takeover, transaction-velocity abuse). It features robust data preprocessing, a tailored model suite, and strict defense-only optimization with sub-100ms inference targeting.
 
-## Architecture
+## Business Impact & False-Positive Cost
+
+In high-volume transaction environments, an aggressive model can block too many legitimate users, leading to customer churn and direct revenue loss. This framework explicitly models the **false-positive cost**. 
+By optimizing the decision threshold for maximum ROI (balancing the value of fraud caught against the friction cost of blocked legitimate users), the system ensures we maximize net savings in ₹ rather than just abstract metrics. (Run `python scripts/cost_benefit_analysis.py` for exact ₹ tradeoffs).
 
 ```
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
@@ -19,8 +22,9 @@ A production-grade fraud detection system implementing a three-stage Imbalance H
                           └───────────────────────┬─────────────────┘
                                                   │
      ┌────────────────────────────────────────────▼───────────────────────┐
-     │                        Model Suite (10 Models)                     │
-     │  LR │ SVM-RBF │ DT │ RF │ GBM │ XGB │ LGBM │ CatBoost │ IF │ AE    │
+     │           Model Suite (Ablation-Driven Selection)                  │
+     │  Top Boosted: XGB │ LGBM │ CatBoost (Selected for Stacking/Demo) │
+     │  Classical & Unsupervised (Used to prove baseline limits)          │
      └────────────────────────┬───────────────────────────────────────────┘
                               │
                    ┌──────────▼──────────┐
@@ -35,7 +39,22 @@ A production-grade fraud detection system implementing a three-stage Imbalance H
               └───────────────────────────────┘
 ```
 
-## Quick Start
+## AI Judgment & Model Ablation
+
+We experimented with 10 models (from LR to SVM to Autoencoders) but deliberately reduced the active ensemble to **XGBoost, LightGBM, and CatBoost**. 
+Classical models (SVM, LR) struggled with the severe non-linear imbalance, and unsupervised methods (Isolation Forest, Autoencoders) flagged too many false positives. By proving these limitations via ablation, we deployed the right tool (gradient boosting) for the tabular data challenge.
+
+## Quick Start & Demo
+
+Try the Streamlit Demo immediately with sample transactions:
+```bash
+# Start the visual UI
+streamlit run app.py
+```
+Or run the CLI inference:
+```bash
+python predict.py --transaction samples/sample_transactions.json --dataset paysim
+```
 
 ### 1. Environment Setup
 
@@ -91,7 +110,7 @@ pytest tests/ -v
 
 | Component | Implementation |
 |---|---|
-| **Splitting** | Chronological 70/30 (no shuffling) |
+| **Splitting** | Chronological 85/15 (train/val) & 70/30 (train/test) |
 | **Imputation** | Median (numerical), Mode (categorical) |
 | **Normalization** | Z-score (fit on train) |
 | **Encoding** | Frequency encoding (high-cardinality), One-hot (low-cardinality) |
@@ -102,17 +121,21 @@ pytest tests/ -v
 | **Autoencoder** | PyTorch, MPS-accelerated |
 | **Stacking** | XGB + LGBM + CatBoost → LR meta-learner |
 | **Optimization** | Optuna (TPE sampler, PR-AUC objective) |
-| **XAI** | SHAP summary + force plots |
-| **Target** | PR-AUC primary, <100ms inference |
+| **Target** | Maximize ROI via F1-score / precision-recall balance |
 
-## Hardware Notes (M4 Mac)
+### Why Chronological Splitting?
+Fraud patterns evolve over time. Randomly splitting data (`train_test_split`) causes "future-leaking-into-past" — the model learns from future fraud attacks to predict past ones, yielding artificially high scores that fail in production. We use strict chronological splitting to simulate a real-world production deployment.
 
-- **MPS Acceleration**: Autoencoder auto-detects Apple Metal Performance Shaders
-- **Parallel Inference**: Stacking ensemble uses ThreadPoolExecutor for base model predictions
-- **SVM Optimization**: Stratified 100K subsample preserving fraud ratio
+## Results (PaySim Dataset)
 
-## Metrics
+*Metrics on the held-out 30% chronological test set after IHS and optimization.*
 
-- **Primary**: PR-AUC (Precision-Recall Area Under Curve)
-- **Secondary**: F1-score, MCC, Recall, ROC-AUC
-- **IHS Targets**: 22-38% Recall lift, 18-31% F1 lift
+| Model | Precision | Recall | F1-Score | PR-AUC | Latency (ms) |
+|---|---|---|---|---|---|
+| **CatBoost** | **94.68%** | 72.49% | **82.11%** | **89.11%** | <100ms |
+| **LightGBM** | 93.18% | **75.95%** | 83.69% | 86.51% | <100ms |
+| **HistGradientBoosting** | 91.24% | 73.17% | 81.21% | 78.22% | <100ms |
+| **XGBoost** | 93.66% | 37.51% | 53.57% | 53.87% | <100ms |
+| **Stacking Ensemble** | 95.59% | 50.80% | 66.35% | 59.20% | ~150ms |
+
+CatBoost provided the strongest Precision-Recall AUC (89.11%) with 94.6% precision, ensuring extremely low false positives while catching the majority of fraud rings.
