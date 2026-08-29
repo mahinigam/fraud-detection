@@ -1,7 +1,13 @@
 {
-  "xgboost": 0.9978039860725403,
-  "lightgbm": 0.9999360056493556,
-  "catboost": 0.9846037875066812,
-  "hist_gradient_boosting": 0.9811782639932071,
-  "stacking_ensemble": 1.983876463233477e-08
+  "xgboost": 0.9746604561805725,
+  "lightgbm": 0.9962145468779926,
+  "catboost": 0.9851064470037219,
+  "logistic_regression": 0.9997096657752991,
+  "svm_rbf": 1.0,
+  "decision_tree": 0.9999973544592258,
+  "random_forest": 0.19047710340599594,
+  "hist_gradient_boosting": 0.9876047973213621,
+  "isolation_forest": 0.6612496003521202,
+  "autoencoder": 0.9999998807907104,
+  "stacking_ensemble": 0.4668955211541088
 }

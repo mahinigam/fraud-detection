@@ -35,10 +35,16 @@ class StackingEnsemble:
         """
         self.base_models = base_models
         self.n_folds = n_folds
-        self.meta_learner = LogisticRegression(
-            solver="saga",
-            max_iter=1000,
-            random_state=RANDOM_STATE,
+        from sklearn.calibration import CalibratedClassifierCV
+        self.meta_learner = CalibratedClassifierCV(
+            LogisticRegression(
+                solver="saga",
+                max_iter=1000,
+                random_state=RANDOM_STATE,
+                C=0.1
+            ),
+            method="sigmoid",
+            cv=3
         )
         self.classes_ = np.array([0, 1])
 
