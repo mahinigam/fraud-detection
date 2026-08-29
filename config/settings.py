@@ -74,9 +74,9 @@ SEARCH_SPACES = {
         "max_iter": [1000],
     },
     "decision_tree": {
-        "max_depth": (3, 30),
-        "min_samples_split": (2, 50),
-        "min_samples_leaf": (1, 20),
+        "max_depth": (3, 8),
+        "min_samples_split": (10, 100),
+        "min_samples_leaf": (10, 50),
         "criterion": ["gini", "entropy"],
     },
     "random_forest": {

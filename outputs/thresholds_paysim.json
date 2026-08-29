@@ -4,7 +4,7 @@
   "catboost": 0.9851064470037219,
   "logistic_regression": 0.9997096657752991,
   "svm_rbf": 1.0,
-  "decision_tree": 0.9999973544592258,
+  "decision_tree": 0.9999990921668235,
   "random_forest": 0.19047710340599594,
   "hist_gradient_boosting": 0.9876047973213621,
   "isolation_forest": 0.6612496003521202,
