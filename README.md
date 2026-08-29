@@ -132,10 +132,10 @@ Fraud patterns evolve over time. Randomly splitting data (`train_test_split`) ca
 
 | Model | Precision | Recall | F1-Score | PR-AUC | Latency (ms) |
 |---|---|---|---|---|---|
-| **CatBoost** | 94.15% | 74.20% | 82.99% | 88.45% | <100ms |
-| **LightGBM** | 88.93% | 76.06% | 81.99% | 85.81% | <100ms |
-| **HistGradientBoosting** | **95.71%** | 80.45% | **87.42%** | **93.10%** | <100ms |
-| **XGBoost** | 87.19% | 74.11% | 80.12% | 89.32% | <100ms |
-| **Stacking Ensemble** | 75.51% | **84.67%** | 79.83% | 76.46% | ~150ms |
+| **HistGradientBoosting** | **96.89%** | 78.33% | **86.63%** | **93.28%** | <100ms |
+| **LightGBM** | 83.84% | **87.54%** | 85.65% | 92.71% | <100ms |
+| **Stacking Ensemble** | 90.65% | 81.35% | 85.75% | 92.84% | ~150ms |
+| **XGBoost** | 80.47% | 86.14% | 83.21% | 91.47% | <100ms |
+| **CatBoost** | 92.68% | 73.33% | 81.87% | 88.98% | <100ms |
 
-HistGradientBoosting provided the strongest overall performance with a PR-AUC of 93.10% and 95.71% precision, catching 80.45% of fraud rings with extremely low false positives.
+HistGradientBoosting provided the strongest overall performance with a PR-AUC of 93.28% and 96.89% precision, catching 78.33% of fraud rings with extremely low false positives.
