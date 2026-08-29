@@ -84,7 +84,7 @@ def main():
         status = "🚨 FRAUD" if y_pred[i] == 1 else "✅ LEGITIMATE"
         print(f"Transaction {i+1}:")
         print(f"  Probability : {y_prob[i]:.4f}")
-        print(f"  Decision    : {status}")
+        print(f"  Decision    : {status} (Threshold: {threshold:.4f})")
         print("-" * 40)
 
 if __name__ == "__main__":

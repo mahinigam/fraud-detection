@@ -111,6 +111,7 @@ figures/
 !outputs/thresholds_paysim.json
 !outputs/results_paysim.json
 !outputs/ihs_comparison_paysim.csv
+!outputs/predictions_paysim.csv.zip
 !data/processed/preprocessor_paysim.pkl
 
 # Irrelevant

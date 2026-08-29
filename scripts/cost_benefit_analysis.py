@@ -16,14 +16,18 @@ def run_cost_analysis(dataset: str, avg_fraud_value: float, fp_cost: float):
     """
     outputs_dir = Path("outputs")
     preds_file = outputs_dir / f"predictions_{dataset}.csv"
+    preds_zip_file = outputs_dir / f"predictions_{dataset}.csv.zip"
     thresh_file = outputs_dir / f"thresholds_{dataset}.json"
     
-    if not preds_file.exists() or not thresh_file.exists():
+    if not thresh_file.exists() or (not preds_file.exists() and not preds_zip_file.exists()):
         print(f"Error: Missing prediction or threshold files for {dataset}")
         print(f"Run the pipeline for {dataset} first.")
         return
 
-    df = pd.read_csv(preds_file)
+    if preds_file.exists():
+        df = pd.read_csv(preds_file)
+    else:
+        df = pd.read_csv(preds_zip_file)
     with open(thresh_file, "r") as f:
         thresholds = json.load(f)
         
