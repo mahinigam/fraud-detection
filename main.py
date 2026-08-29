@@ -526,23 +526,64 @@ def run_pipeline(
         # ── Save Results ─────────────────────────────────────────────────
         tag = f"_{ablation_tag}" if ablation_tag else ""
         results_path = OUTPUTS / f"results_{dataset_name}{tag}.json"
+        if results_path.exists():
+            with open(results_path, "r") as f:
+                existing_results = json.load(f)
+            existing_results.update(post_ihs_results)
+            post_ihs_results_to_save = existing_results
+        else:
+            post_ihs_results_to_save = post_ihs_results
+
         with open(results_path, "w") as f:
-            json.dump(post_ihs_results, f, indent=2, default=str)
+            json.dump(post_ihs_results_to_save, f, indent=2, default=str)
 
         # Save optimal thresholds
         thresh_path = OUTPUTS / f"thresholds_{dataset_name}{tag}.json"
+        if thresh_path.exists():
+            with open(thresh_path, "r") as f:
+                existing_thresholds = json.load(f)
+            existing_thresholds.update(optimal_thresholds)
+            optimal_thresholds_to_save = existing_thresholds
+        else:
+            optimal_thresholds_to_save = optimal_thresholds
+
         with open(thresh_path, "w") as f:
-            json.dump(optimal_thresholds, f, indent=2, default=str)
+            json.dump(optimal_thresholds_to_save, f, indent=2, default=str)
 
         # Save best hyperparameters
         params_path = OUTPUTS / f"best_params_{dataset_name}{tag}.json"
+        if params_path.exists():
+            with open(params_path, "r") as f:
+                existing_params = json.load(f)
+            existing_params.update(all_best_params)
+            all_best_params_to_save = existing_params
+        else:
+            all_best_params_to_save = all_best_params
+            
         with open(params_path, "w") as f:
-            json.dump(all_best_params, f, indent=2, default=str)
+            json.dump(all_best_params_to_save, f, indent=2, default=str)
 
         # Save raw predictions for figure generation (ROC/PR curves, etc)
         preds_path = OUTPUTS / f"predictions_{dataset_name}.csv"
+        zip_path = OUTPUTS / f"predictions_{dataset_name}.csv.zip"
+        
+        existing_preds = None
+        if zip_path.exists():
+            existing_preds = pd.read_csv(zip_path)
+        elif preds_path.exists():
+            existing_preds = pd.read_csv(preds_path)
+            
+        if existing_preds is not None:
+            for col in predictions_df.columns:
+                existing_preds[col] = predictions_df[col]
+            predictions_df = existing_preds
+            
+        for col in predictions_df.columns:
+            if predictions_df[col].dtype in ['float64', 'float32']:
+                predictions_df[col] = predictions_df[col].round(4)
+                
         predictions_df.to_csv(preds_path, index=False)
-        logger.info(f"Raw predictions saved to {preds_path}")
+        logger.info(f"Raw predictions saved to {preds_path} (remember to zip to save space)")
 
         # Save primary models for inference/demo
         for m_name in ["catboost", "lightgbm", "xgboost", "stacking_ensemble"]:

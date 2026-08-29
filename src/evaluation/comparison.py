@@ -90,7 +90,23 @@ def print_comparison(comparison_df: pd.DataFrame) -> None:
 
 
 def save_comparison(comparison_df: pd.DataFrame, filename: str = "ihs_comparison.csv"):
-    """Save comparison to CSV."""
+    """Save comparison to CSV (merging with existing if present)."""
+    import os
     path = OUTPUTS / filename
-    comparison_df.to_csv(path, index=False)
-    logger.info(f"Comparison saved to {path}")
+    if path.exists():
+        existing_df = pd.read_csv(path)
+        # Update existing rows or append new ones based on 'model'
+        merged_df = existing_df.set_index('model')
+        new_df = comparison_df.set_index('model')
+        merged_df.update(new_df)
+        
+        # Append any new models that didn't exist before
+        new_models = new_df[~new_df.index.isin(merged_df.index)]
+        merged_df = pd.concat([merged_df, new_models])
+        
+        merged_df.reset_index(inplace=True)
+        merged_df.to_csv(path, index=False)
+        logger.info(f"Comparison merged and saved to {path}")
+    else:
+        comparison_df.to_csv(path, index=False)
+        logger.info(f"Comparison saved to {path}")

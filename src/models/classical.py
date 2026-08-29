@@ -201,6 +201,8 @@ def build_classical_models(
         "svm_rbf": svm_model,
 
         "decision_tree": DecisionTreeClassifier(
+            max_depth=8,
+            min_samples_leaf=30,
             class_weight=class_weights,
             random_state=RANDOM_STATE,
         ),
