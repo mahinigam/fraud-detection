@@ -147,7 +147,10 @@ def find_optimal_threshold(
     t_youden = optimize_threshold_youden(y_true, y_prob)
     t_f1 = optimize_threshold_f1(y_true, y_prob)
     t_precision = optimize_threshold_precision_constrained(y_true, y_prob, target_precision=0.90)
-    t_business = optimize_threshold_roi(y_true, y_prob, avg_fraud_value=5000.0, fp_cost=50.0)
+    
+    avg_fraud_value = kwargs.get('avg_fraud_value', 5000.0)
+    fp_cost = kwargs.get('fp_cost', 50.0)
+    t_business = optimize_threshold_roi(y_true, y_prob, avg_fraud_value=avg_fraud_value, fp_cost=fp_cost)
     
     # We return the requested method's threshold directly for compatibility,
     # but we can also store all strategies in a dictionary.
