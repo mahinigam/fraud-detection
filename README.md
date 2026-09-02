@@ -15,6 +15,9 @@ In high-volume transaction environments, traditional fraud detection models oper
 ## 3. Live Demo
 Run the Merchant Risk Dashboard to see Abuse-Ring detection and Gemini AI reasoning in action!
 
+> [!NOTE]
+> The abuse ring structure (device clusters mapping to coordinated attacks) is a synthetic attack scenario layered onto the original PaySim data specifically to demonstrate merchant-level detection and graph investigation.
+
 ```bash
 # 1. Provide your Gemini API key
 echo 'GEMINI_API_KEY="your_api_key_here"' > .env
@@ -72,7 +75,7 @@ We train and evaluate on a massive dataset of **6,362,620 transactions**. To sim
 - **TEST**: Final 30% chronological holdout.
 
 > [!IMPORTANT]
-> The test set was strictly held-out and **never** used for feature selection, hyperparameter tuning, threshold selection, or model selection.
+> The test set was strictly held-out and **never** used for feature selection, hyperparameter tuning, threshold selection, or model selection. Thresholds are selected exclusively on the chronological validation set and frozen before evaluating the final chronological test set.
 
 ### Performance Context (HistGradientBoosting)
 
@@ -121,7 +124,7 @@ Place [IEEE-CIS](https://www.kaggle.com/c/ieee-fraud-detection/data) in `data/ra
 python main.py --dataset paysim --skip-tuning --models xgboost lightgbm catboost
 ```
 
-4. **Run End-to-End Latency Benchmark**:
+4. **Run pipeline + latency benchmark**:
 ```bash
 # Our latency benchmark measures the true path: JSON parsing → DF Creation → Feature Eng → Preprocessing → Predict
 # Target: <100ms

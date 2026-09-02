@@ -397,36 +397,43 @@ def run_pipeline(
             ae.fit(X_train_np, y_train_np)
             all_models["autoencoder"] = ae
 
-        # ── Step 7: Threshold Optimization ───────────────────────────────
+        # ── Step 7: Threshold Optimization (Validation Set) ──────────────
         logger.info("=" * 70)
-        logger.info("  STEP 7: THRESHOLD OPTIMIZATION")
+        logger.info("  STEP 7: THRESHOLD OPTIMIZATION (ON VALIDATION SET)")
         logger.info("=" * 70)
 
         optimal_thresholds = {}
-        predictions_df = pd.DataFrame({"y_test": y_test_np})
+        predictions_df_val = pd.DataFrame({"y_val": y_val_np})
+        predictions_df_test = pd.DataFrame({"y_test": y_test_np})
 
         for name, model in all_models.items():
             if hasattr(model, "predict_proba"):
-                y_prob = model.predict_proba(X_test_np)[:, 1]
+                y_prob_val = model.predict_proba(X_val_np)[:, 1]
+                y_prob_test = model.predict_proba(X_test_np)[:, 1]
             elif hasattr(model, "decision_function"):
-                raw = model.decision_function(X_test_np)
-                y_prob = 1 / (1 + np.exp(-raw))
+                raw_val = model.decision_function(X_val_np)
+                raw_test = model.decision_function(X_test_np)
+                y_prob_val = 1 / (1 + np.exp(-raw_val))
+                y_prob_test = 1 / (1 + np.exp(-raw_test))
             else:
                 continue
 
-            predictions_df[name] = y_prob
+            predictions_df_val[name] = y_prob_val
+            predictions_df_test[name] = y_prob_test
+            
             if use_threshold_opt:
-                t_youden = find_optimal_threshold(y_test_np, y_prob, method="youden")
-                t_f1 = find_optimal_threshold(y_test_np, y_prob, method="f1")
+                # Optimize threshold strictly on the validation set!
+                t_youden = find_optimal_threshold(y_val_np, y_prob_val, method="youden")
+                t_f1 = find_optimal_threshold(y_val_np, y_prob_val, method="f1")
                 optimal_thresholds[name] = t_f1
                 logger.info(f"  {name}: Youden={t_youden:.4f}, F1={t_f1:.4f} (using F1)")
             else:
                 optimal_thresholds[name] = 0.5
                 logger.info(f"  {name}: threshold=0.5 (ablation mode)")
 
-        # ── Step 8: Evaluation ───────────────────────────────────────────
+        # ── Step 8: Evaluation (Test Set) ────────────────────────────────
         logger.info("=" * 70)
-        logger.info("  STEP 8: EVALUATION (Post-IHS with Optimized Thresholds)")
+        logger.info("  STEP 8: EVALUATION (Post-IHS with Frozen Thresholds)")
         logger.info("=" * 70)
 
         for name, model in all_models.items():
@@ -462,11 +469,14 @@ def run_pipeline(
             stacking.fit(X_train_smote, y_train_smote)
             all_models["stacking_ensemble"] = stacking
 
-            # Threshold optimization for stacking
-            y_prob_stack = stacking.predict_proba(X_test_np)[:, 1]
-            predictions_df["stacking_ensemble"] = y_prob_stack
+            # Threshold optimization for stacking (Validation Set)
+            y_prob_stack_val = stacking.predict_proba(X_val_np)[:, 1]
+            y_prob_stack_test = stacking.predict_proba(X_test_np)[:, 1]
+            
+            predictions_df_val["stacking_ensemble"] = y_prob_stack_val
+            predictions_df_test["stacking_ensemble"] = y_prob_stack_test
 
-            t_stack = find_optimal_threshold(y_test_np, y_prob_stack, method="f1")
+            t_stack = find_optimal_threshold(y_val_np, y_prob_stack_val, method="f1")
             optimal_thresholds["stacking_ensemble"] = t_stack
 
             post_ihs_results["stacking_ensemble"] = _evaluate_model(
@@ -565,6 +575,7 @@ def run_pipeline(
             json.dump(all_best_params_to_save, f, indent=2, default=str)
 
         # Save raw predictions for figure generation (ROC/PR curves, etc)
+        # Test Set
         preds_path = OUTPUTS / f"predictions_{dataset_name}.csv"
         zip_path = OUTPUTS / f"predictions_{dataset_name}.csv.zip"
         
@@ -575,16 +586,38 @@ def run_pipeline(
             existing_preds = pd.read_csv(preds_path)
             
         if existing_preds is not None:
-            for col in predictions_df.columns:
-                existing_preds[col] = predictions_df[col]
-            predictions_df = existing_preds
+            for col in predictions_df_test.columns:
+                existing_preds[col] = predictions_df_test[col]
+            predictions_df_test = existing_preds
             
-        for col in predictions_df.columns:
-            if predictions_df[col].dtype in ['float64', 'float32']:
-                predictions_df[col] = predictions_df[col].round(4)
+        for col in predictions_df_test.columns:
+            if predictions_df_test[col].dtype in ['float64', 'float32']:
+                predictions_df_test[col] = predictions_df_test[col].round(4)
                 
-        predictions_df.to_csv(preds_path, index=False)
-        logger.info(f"Raw predictions saved to {preds_path} (remember to zip to save space)")
+        predictions_df_test.to_csv(preds_path, index=False)
+        logger.info(f"Raw test predictions saved to {preds_path} (remember to zip to save space)")
+        
+        # Validation Set (for ROI threshold analysis)
+        val_preds_path = OUTPUTS / f"predictions_{dataset_name}_val.csv"
+        val_zip_path = OUTPUTS / f"predictions_{dataset_name}_val.csv.zip"
+        
+        existing_val_preds = None
+        if val_zip_path.exists():
+            existing_val_preds = pd.read_csv(val_zip_path)
+        elif val_preds_path.exists():
+            existing_val_preds = pd.read_csv(val_preds_path)
+            
+        if existing_val_preds is not None:
+            for col in predictions_df_val.columns:
+                existing_val_preds[col] = predictions_df_val[col]
+            predictions_df_val = existing_val_preds
+            
+        for col in predictions_df_val.columns:
+            if predictions_df_val[col].dtype in ['float64', 'float32']:
+                predictions_df_val[col] = predictions_df_val[col].round(4)
+                
+        predictions_df_val.to_csv(val_preds_path, index=False)
+        logger.info(f"Raw val predictions saved to {val_preds_path}")
 
         # Save primary models for inference/demo
         for m_name in ["catboost", "lightgbm", "xgboost", "stacking_ensemble"]:

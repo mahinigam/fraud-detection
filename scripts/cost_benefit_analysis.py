@@ -17,20 +17,31 @@ def run_cost_analysis(dataset: str, avg_fraud_value: float, fp_cost: float):
     Computes business metrics based on optimized thresholds.
     """
     outputs_dir = Path("outputs")
-    preds_file = outputs_dir / f"predictions_{dataset}.csv"
-    preds_zip_file = outputs_dir / f"predictions_{dataset}.csv.zip"
+    val_preds_file = outputs_dir / f"predictions_{dataset}_val.csv"
+    val_preds_zip_file = outputs_dir / f"predictions_{dataset}_val.csv.zip"
+    test_preds_file = outputs_dir / f"predictions_{dataset}.csv"
+    test_preds_zip_file = outputs_dir / f"predictions_{dataset}.csv.zip"
     
-    if not preds_file.exists() and not preds_zip_file.exists():
+    if not ((val_preds_file.exists() or val_preds_zip_file.exists()) and 
+            (test_preds_file.exists() or test_preds_zip_file.exists())):
         print(f"Error: Missing prediction files for {dataset}")
         print(f"Run the pipeline for {dataset} first.")
         return
 
-    if preds_file.exists():
-        df = pd.read_csv(preds_file)
+    # Load validation predictions (for threshold optimization)
+    if val_preds_file.exists():
+        df_val = pd.read_csv(val_preds_file)
     else:
-        df = pd.read_csv(preds_zip_file)
+        df_val = pd.read_csv(val_preds_zip_file)
         
-    y_true = df["y_test"].values
+    # Load test predictions (for evaluation)
+    if test_preds_file.exists():
+        df_test = pd.read_csv(test_preds_file)
+    else:
+        df_test = pd.read_csv(test_preds_zip_file)
+        
+    y_val = df_val["y_val"].values
+    y_test = df_test["y_test"].values
     
     print("=" * 100)
     print(f"  COST-BENEFIT ANALYSIS — {dataset.upper()}")
@@ -40,7 +51,7 @@ def run_cost_analysis(dataset: str, avg_fraud_value: float, fp_cost: float):
     print(f"  Cost of False Positive (Investigation/Churn): ₹{fp_cost:,.2f}")
     print("-" * 100)
     
-    total_fraud_txns = np.sum(y_true == 1)
+    total_fraud_txns = np.sum(y_test == 1)
     max_possible_savings = total_fraud_txns * avg_fraud_value
     
     print(f"{'Model':<20} | {'Mode':<18} | {'Threshold':<9} | {'Net Savings (₹)':<15} | {'Fraud Caught':<12} | {'FP Cost':<10}")
@@ -48,15 +59,16 @@ def run_cost_analysis(dataset: str, avg_fraud_value: float, fp_cost: float):
     
     results = []
     
-    for model in df.columns:
-        if model == "y_test":
+    for model in df_test.columns:
+        if model == "y_test" or model not in df_val.columns:
             continue
             
-        y_prob = df[model].values
+        y_prob_val = df_val[model].values
+        y_prob_test = df_test[model].values
         
-        # Calculate three different thresholds
+        # Calculate three different thresholds strictly on validation set
         try:
-            t_dict = find_optimal_threshold(y_true, y_prob, method="all", avg_fraud_value=avg_fraud_value, fp_cost=fp_cost)
+            t_dict = find_optimal_threshold(y_val, y_prob_val, method="all", avg_fraud_value=avg_fraud_value, fp_cost=fp_cost)
         except Exception:
             continue
             
@@ -67,10 +79,11 @@ def run_cost_analysis(dataset: str, avg_fraud_value: float, fp_cost: float):
         ]
         
         for mode_name, t in modes:
-            y_pred = (y_prob >= t).astype(int)
+            # Apply the frozen threshold to the test set
+            y_pred = (y_prob_test >= t).astype(int)
             
-            tp = np.sum((y_pred == 1) & (y_true == 1))
-            fp = np.sum((y_pred == 1) & (y_true == 0))
+            tp = np.sum((y_pred == 1) & (y_test == 1))
+            fp = np.sum((y_pred == 1) & (y_test == 0))
             
             fraud_caught_value = tp * avg_fraud_value
             false_positive_cost = fp * fp_cost
