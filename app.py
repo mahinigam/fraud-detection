@@ -2,20 +2,30 @@ import streamlit as st
 import json
 import joblib
 import pandas as pd
+import numpy as np
 from pathlib import Path
 import shap
 import matplotlib.pyplot as plt
+import networkx as nx
+from google import genai
+from dotenv import load_dotenv
+import os
 from src.data.feature_engineering import engineer_features
+
+# Load environment variables
+load_dotenv()
+gemini_api_key = os.environ.get("GEMINI_API_KEY")
 
 st.set_page_config(page_title="AI Risk Manager Demo", page_icon="🚨", layout="wide")
 
 st.title("Razorpay AI Buildathon — Risk Manager Demo")
-st.markdown("### Fraud-Spike Detector & Abuse-Ring Sentinel")
+st.markdown("### Merchant-Level Risk & Abuse-Ring Sentinel Dashboard")
 
-# Sidebar
+# ── Sidebar Configuration ──
 st.sidebar.header("Configuration")
 dataset = st.sidebar.selectbox("Dataset", ["paysim", "ieee"], index=0)
 model_name = st.sidebar.selectbox("Model", ["catboost", "lightgbm", "xgboost"], index=0)
+merchant_name = st.sidebar.text_input("Simulate Merchant ID", value="M1982863514")
 
 # Load Models
 @st.cache_resource
@@ -31,6 +41,7 @@ def load_artifacts(ds, mod):
     model = joblib.load(model_path)
     with open(thresholds_path, 'r') as f:
         thresholds = json.load(f)
+    # Defaulting to Business-Optimal or F1
     threshold = thresholds.get(mod, 0.5)
     return preprocessor, model, threshold
 
@@ -40,70 +51,162 @@ if not preprocessor:
     st.error(f"Models not found for {dataset}/{model_name}. Please run the pipeline first.")
     st.stop()
 
-# Default Transaction
-default_paysim = """{
-  "step": 5,
-  "type": "CASH_OUT",
-  "amount": 5000000.0,
-  "oldbalanceOrg": 5000000.0,
+# ── Mocking Merchant Data for Demo ──
+# In a real app, this would query a real-time database (e.g. Firebase/Redis) for the last 24h of transactions.
+np.random.seed(42)
+total_txns = 12481
+fraud_txns = 183
+baseline_rate = 0.31
+current_rate = (fraud_txns / total_txns) * 100
+
+st.markdown("---")
+st.subheader(f"Merchant: {merchant_name}")
+
+# Metrics Row
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Last 24h Transactions", f"{total_txns:,}")
+col2.metric("Fraud-Risk Transactions", f"{fraud_txns}")
+col3.metric("Current Fraud Rate", f"{current_rate:.2f}%", f"{(current_rate - baseline_rate)/baseline_rate * 100:.0f}%", delta_color="inverse")
+col4.metric("Baseline Fraud Rate", f"{baseline_rate:.2f}%")
+
+if current_rate > baseline_rate * 2:
+    st.error("🚨 **FRAUD SPIKE DETECTED** 🚨")
+else:
+    st.success("✅ Normal Transaction Volume")
+
+st.markdown("---")
+st.subheader("Why? Abuse-Ring Investigation")
+
+# ── Construct NetworkX Graph for Abuse Ring ──
+# We create a bipartite/tripartite graph: Customers -> Devices/IPs -> Merchant
+G = nx.Graph()
+
+# Add nodes
+merchant_node = f"Merchant {merchant_name}"
+G.add_node(merchant_node, type='merchant', color='red', size=800)
+
+devices = ['Device Cluster A', 'Device Cluster B', 'Device Cluster C']
+for dev in devices:
+    G.add_node(dev, type='device', color='orange', size=500)
+    G.add_edge(dev, merchant_node, weight=3)
+
+for i in range(1, 13): # Mock 12 customers in the abuse ring
+    cust = f"Customer C{i}"
+    G.add_node(cust, type='customer', color='lightblue', size=300)
+    # Connect customer to a random device cluster
+    dev = devices[np.random.randint(0, 3)]
+    G.add_edge(cust, dev, weight=1)
+
+# Draw Graph
+col_graph, col_ai = st.columns([1.5, 1])
+
+with col_graph:
+    st.markdown("**Entity Graph Analysis**")
+    fig, ax = plt.subplots(figsize=(8, 6))
+    
+    pos = nx.spring_layout(G, k=0.5, iterations=50, seed=42)
+    colors = [node[1]['color'] for node in G.nodes(data=True)]
+    sizes = [node[1]['size'] for node in G.nodes(data=True)]
+    
+    nx.draw_networkx_nodes(G, pos, node_color=colors, node_size=sizes, alpha=0.8, ax=ax)
+    nx.draw_networkx_edges(G, pos, width=2.0, alpha=0.5, ax=ax)
+    nx.draw_networkx_labels(G, pos, font_size=9, font_family="sans-serif", ax=ax)
+    
+    ax.axis('off')
+    st.pyplot(fig)
+
+with col_ai:
+    st.markdown("**LLM / AI Reasoning Layer**")
+    
+    if st.button("Generate Threat Intelligence Report", type="primary"):
+        if not gemini_api_key or gemini_api_key == "your_api_key_here":
+            st.warning("⚠️ Please provide a valid GEMINI_API_KEY in the .env file to generate the report.")
+        else:
+            with st.spinner("Analyzing ML outputs & graph patterns..."):
+                try:
+                    client = genai.Client(api_key=gemini_api_key)
+                    prompt = f"""
+                    You are an expert fraud investigator. Analyze the following ML and graph data to produce a concise threat intelligence report.
+                    
+                    Data:
+                    - Merchant: {merchant_name}
+                    - Transaction velocity increased: 374%
+                    - 81% of flagged transactions share 3 device clusters.
+                    - Current Fraud Rate: {current_rate:.2f}% (Baseline: {baseline_rate:.2f}%)
+                    - Attack started at: 02:13 UTC
+                    
+                    Format the output strictly as:
+                    **Risk Explanation:** [1 paragraph explanation]
+                    **Evidence:** [Bullet points]
+                    """
+                    
+                    response = client.models.generate_content(
+                        model='gemini-2.5-flash',
+                        contents=prompt,
+                    )
+                    st.info(response.text)
+                except Exception as e:
+                    st.error(f"Failed to generate report: {e}")
+    else:
+        st.info("Click the button above to generate a natural language explanation of the ongoing attack using Gemini 2.5 Flash.")
+        
+st.markdown("---")
+st.subheader("Model Explainability (SHAP)")
+st.markdown("Select a sample transaction from the attack cluster to see the model's logic.")
+
+# Mock a transaction payload
+default_payload = {
+  "step": 743,
+  "type": "TRANSFER",
+  "amount": 7316.34,
+  "oldbalanceOrg": 7316.34,
   "newbalanceOrig": 0.0,
-  "oldbalanceDest": 10000.0,
-  "newbalanceDest": 5010000.0
-}"""
+  "oldbalanceDest": 0.0,
+  "newbalanceDest": 0.0
+}
 
-# Main Area
-col1, col2 = st.columns([1, 1])
+transaction_text = st.text_area("JSON Payload:", value=json.dumps(default_payload, indent=2), height=200)
 
-with col1:
-    st.subheader("Transaction JSON")
-    transaction_text = st.text_area("Paste transaction here:", value=default_paysim, height=300)
-
-with col2:
-    st.subheader("Analysis")
-    if st.button("Evaluate Risk", type="primary"):
-        try:
-            data = json.loads(transaction_text)
-            df = pd.DataFrame([data])
+if st.button("Explain Single Transaction"):
+    try:
+        data = json.loads(transaction_text)
+        df = pd.DataFrame([data])
+        
+        # Preprocess
+        df_engineered = engineer_features(df)
+        X_processed = preprocessor.transform(df_engineered)
+        if hasattr(preprocessor, "feature_names_"):
+            X_processed = X_processed.reindex(columns=preprocessor.feature_names_, fill_value=0.0)
+        X_np = X_processed.values.astype("float32")
+        
+        # Predict
+        if hasattr(model, "predict_proba"):
+            prob = model.predict_proba(X_np)[0, 1]
+        else:
+            prob = model.predict(X_np)[0]
             
-            # Preprocess
-            df_engineered = engineer_features(df)
-            X_processed = preprocessor.transform(df_engineered)
-            if hasattr(preprocessor, "feature_names_"):
-                X_processed = X_processed.reindex(columns=preprocessor.feature_names_, fill_value=0.0)
-            X_np = X_processed.values.astype("float32")
+        st.metric("Fraud Score (Probability)", f"{prob:.4f}", delta=f"Threshold: {threshold:.4f}", delta_color="off")
+        
+        with st.spinner("Generating SHAP explanation..."):
+            explainer = shap.TreeExplainer(model)
+            shap_values = explainer.shap_values(X_np)
             
-            # Predict
-            if hasattr(model, "predict_proba"):
-                prob = model.predict_proba(X_np)[0, 1]
-            else:
-                prob = model.predict(X_np)[0]
+            if isinstance(shap_values, list):
+                shap_values = shap_values[1]
                 
-            is_fraud = prob >= threshold
+            fig, ax = plt.subplots(figsize=(10, 4))
             
-            # Display Result
-            st.metric("Fraud Score (Probability)", f"{prob:.4f}", delta=f"Threshold: {threshold:.4f}", delta_color="off")
-            if is_fraud:
-                st.error("🚨 HIGH RISK: Transaction Blocked")
-            else:
-                st.success("✅ LOW RISK: Transaction Approved")
-                
-            # Explainability
-            st.markdown("### SHAP Explanation")
-            with st.spinner("Generating explanation..."):
-                explainer = shap.TreeExplainer(model)
-                shap_values = explainer.shap_values(X_np)
-                
-                # Check for multiclass shap output
-                if isinstance(shap_values, list):
-                    shap_values = shap_values[1]
-                
-                fig, ax = plt.subplots(figsize=(10, 3))
-                # For a single sample, force_plot or waterfall can be used. Using decision_plot or bar for matplotlib compatibility.
-                shap.plots.waterfall(shap.Explanation(values=shap_values[0], 
-                                                      base_values=explainer.expected_value[1] if isinstance(explainer.expected_value, list) else explainer.expected_value, 
-                                                      data=X_np[0], 
-                                                      feature_names=X_processed.columns.tolist()), show=False)
-                st.pyplot(fig)
-                
-        except Exception as e:
-            st.error(f"Error evaluating transaction: {str(e)}")
+            # Using shap.plots.waterfall inside streamlit safely
+            # Note: shap.plots.waterfall acts directly on plt.gca() by default
+            explanation = shap.Explanation(
+                values=shap_values[0], 
+                base_values=explainer.expected_value[1] if isinstance(explainer.expected_value, list) else explainer.expected_value, 
+                data=X_np[0], 
+                feature_names=X_processed.columns.tolist()
+            )
+            shap.plots.waterfall(explanation, show=False)
+            
+            st.pyplot(fig)
+            
+    except Exception as e:
+        st.error(f"Error evaluating transaction: {str(e)}")

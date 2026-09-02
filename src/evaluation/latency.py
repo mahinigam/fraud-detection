@@ -13,57 +13,65 @@ logger = get_logger(__name__)
 def benchmark_inference(
     model,
     preprocessor,
-    X_sample: np.ndarray,
+    X_sample,
     n_samples: int = BENCHMARK_N_SAMPLES,
     model_name: str = "model",
 ) -> dict:
     """
     Benchmark end-to-end inference latency.
 
-    Measures: preprocessing → prediction → post-processing
-    for single-transaction inference.
-
-    Parameters
-    ----------
-    model : fitted model with predict_proba
-    preprocessor : fitted FraudPreprocessor (or None)
-    X_sample : array-like
-        Sample data to benchmark on.
-    n_samples : int
-        Number of single-transaction inferences to time.
-    model_name : str
-
-    Returns
-    -------
-    dict
-        p50, p95, p99 latencies in ms, plus pass/fail status.
+    Measures: JSON parsing → DataFrame creation → feature engineering (simulated) 
+    → preprocessing → prediction for single-transaction inference.
     """
     import pandas as pd
-
+    import json
+    
     latencies = []
+    
+    # We will simulate the raw payload coming from an API request
+    # Convert X_sample to a list of dicts if it is a dataframe
+    if isinstance(X_sample, pd.DataFrame):
+        records = X_sample.to_dict(orient="records")
+    else:
+        # Fallback if somehow it's already dicts or something else
+        records = X_sample
 
-    for i in range(min(n_samples, len(X_sample))):
-        single = X_sample[i : i + 1]
+    for i in range(min(n_samples, len(records))):
+        raw_dict = records[i]
+        
+        # Simulate JSON payload
+        raw_json_str = json.dumps(raw_dict)
 
         start = time.perf_counter()
-
-        # Preprocess
+        
+        # 1. JSON Parse
+        parsed_payload = json.loads(raw_json_str)
+        
+        # 2. DataFrame creation
+        single_df = pd.DataFrame([parsed_payload])
+        
+        # 3. Feature engineering
+        from src.data.feature_engineering import engineer_features
+        single_df_eng = engineer_features(single_df)
+        
+        # 4. Preprocess
         if preprocessor is not None:
-            if isinstance(single, np.ndarray):
-                single_df = pd.DataFrame(single)
-            else:
-                single_df = single
-            processed = preprocessor.transform(single_df)
+            processed = preprocessor.transform(single_df_eng)
+            if hasattr(preprocessor, "feature_names_"):
+                processed = processed.reindex(columns=preprocessor.feature_names_, fill_value=0.0)
             if isinstance(processed, pd.DataFrame):
                 processed = processed.values
         else:
-            processed = single
+            processed = single_df_eng.values
 
-        # Predict
+        # 4. Predict
         if hasattr(model, "predict_proba"):
             proba = model.predict_proba(processed)
         else:
             proba = model.predict(processed)
+            
+        # 5. Output structure
+        result_dict = {"risk_score": float(proba[0][1] if len(proba[0]) > 1 else proba[0])}
 
         end = time.perf_counter()
         latencies.append((end - start) * 1000)  # Convert to ms

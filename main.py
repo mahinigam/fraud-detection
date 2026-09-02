@@ -165,6 +165,7 @@ def run_pipeline(
         X_train, X_test, y_train, y_test = chronological_split(
             X, y, temporal_col=temporal_col
         )
+        X_test_raw = X_test.copy()
 
         # ── Step 3: Preprocessing & Feature Engineering ─────────────────
         logger.info("=" * 70)
@@ -514,7 +515,7 @@ def run_pipeline(
             logger.info("=" * 70)
 
             latency_results = benchmark_all_models(
-                all_models, None, X_test_np, n_samples=100,
+                all_models, preprocessor, X_test_raw, n_samples=100,
             )
 
             # Save latency results
