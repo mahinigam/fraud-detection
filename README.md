@@ -8,7 +8,7 @@ In high-volume transaction environments, traditional fraud detection models oper
 ## 2. Solution
 **AI Risk Manager** is a production-grade fraud defense system that moves beyond flat transaction scoring. It combines:
 1. **Merchant-Level Risk Aggregation**: Real-time monitoring of transaction velocity and fraud rates to detect spikes instantly.
-2. **Abuse-Ring Graph Clustering**: A `NetworkX`-powered entity graph that connects Customers, Devices, and Merchants to reveal organized abuse rings.
+2. **Abuse-Ring Graph Analysis**: A `NetworkX`-powered entity graph that connects Customers, Devices, and Merchants to reveal organized abuse rings.
 3. **Generative AI Threat Intelligence**: Integration with **Gemini 3.6 Flash** to automatically synthesize complex ML metrics and graph clusters into a plain-English, actionable threat intelligence report.
 4. **ROI-Optimized Thresholds**: A decision engine mathematically tuned to maximize actual rupees saved rather than abstract ML scores.
 
@@ -19,10 +19,13 @@ Run the Merchant Risk Dashboard to see Abuse-Ring detection and Gemini AI reason
 > The abuse ring structure (device clusters mapping to coordinated attacks) is a synthetic attack scenario layered onto the original PaySim data specifically to demonstrate merchant-level detection and graph investigation.
 
 ```bash
-# 1. Provide your Gemini API key
+# 1. Generate the demo dataset (requires data/raw/paysim/paysim.csv)
+python scripts/generate_demo_data.py
+
+# 2. Provide your Gemini API key
 echo 'GEMINI_API_KEY="your_api_key_here"' > .env
 
-# 2. Start the visual UI
+# 3. Start the visual UI
 streamlit run app.py
 ```
 

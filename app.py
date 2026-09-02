@@ -24,8 +24,12 @@ st.markdown("### Merchant-Level Risk & Abuse-Ring Sentinel Dashboard")
 # ── Sidebar Configuration ──
 st.sidebar.header("Configuration")
 dataset = st.sidebar.selectbox("Dataset", ["paysim", "ieee"], index=0)
-model_name = st.sidebar.selectbox("Model", ["catboost", "lightgbm", "xgboost"], index=0)
-merchant_name = st.sidebar.text_input("Simulate Merchant ID", value="C985934102")
+model_name = st.sidebar.selectbox(
+    "Select Model for Inference",
+    ["lightgbm", "xgboost", "catboost", "hist_gradient_boosting", "stacking_ensemble", "random_forest"],
+    index=0
+)
+merchant_name = st.sidebar.text_input("Simulate Merchant ID", value="M1982863514")
 
 # Load Models
 @st.cache_resource
@@ -90,7 +94,7 @@ st.subheader(f"Merchant: {merchant_name}")
 
 # Metrics Row
 col1, col2, col3, col4 = st.columns(4)
-col1.metric("Last 24h Transactions", f"{total_txns:,}")
+col1.metric("Merchant Transactions", f"{len(merchant_df):,}")
 col2.metric("Fraud-Risk Transactions", f"{fraud_txns}")
 col3.metric("Current Fraud Rate", f"{current_rate:.2f}%", f"{(current_rate - baseline_rate)/baseline_rate * 100:.0f}%", delta_color="inverse")
 col4.metric("Baseline Fraud Rate", f"{baseline_rate:.2f}%")
@@ -133,7 +137,7 @@ for idx, row in flagged_df.iterrows():
 col_graph, col_ai = st.columns([1.5, 1])
 
 with col_graph:
-    st.markdown("**Entity Graph Analysis**")
+    st.markdown("### 🕸️ Abuse-Ring Graph Analysis")
     fig, ax = plt.subplots(figsize=(8, 6))
     
     pos = nx.spring_layout(G, k=0.5, iterations=50, seed=42)
