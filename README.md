@@ -77,32 +77,32 @@ We train and evaluate on a massive dataset of **6,362,620 transactions**. To sim
 > [!IMPORTANT]
 > The test set was strictly held-out and **never** used for feature selection, hyperparameter tuning, threshold selection, or model selection. Thresholds are selected exclusively on the chronological validation set and frozen before evaluating the final chronological test set.
 
-### Performance Context (HistGradientBoosting)
+### Performance Context (LightGBM)
 
-**Top Model Performance:**
-- Precision: 96.89%
-- Recall: 78.33%
-- PR-AUC: 93.28%
+**Top Model Performance (Validation-selected Base):**
+- Precision: 47.47%
+- Recall: 96.06%
+- PR-AUC: 85.81%
 
 **At what threshold?**
-Using the Business-Cost Optimal Threshold ($t=0.337$) on the Test Set:
+Using the Business-Cost Optimal Threshold ($t=0.374$) on the Test Set:
 
 |                 | Predicted Legit | Predicted Fraud |
 |-----------------|-----------------|-----------------|
-| **Actual Legit**| 1,900,266       | 8,950           |
-| **Actual Fraud**| 961             | 4,549           |
+| **Actual Legit**| 1,899,349       | 4,863           |
+| **Actual Fraud**| 180             | 4,394           |
 
-*Note: FP count represents the friction introduced to legitimate users, balanced mathematically against the ₹ value of the 4,549 caught fraud transactions.*
+*Note: FP count represents the friction introduced to legitimate users, balanced mathematically against the ₹ value of the 4,394 caught fraud transactions.*
 
 ## 7. False-Positive Economics (ROI)
 
-If we assume an average fraud transaction value of ₹5,000 and a false-positive friction cost of ₹50:
+If we assume an average fraud transaction value of ₹5,000 and a false-positive friction cost of ₹100:
 
 ```
 Business Recommendation:
-Deploying hist_gradient_boosting using the Business-Optimal threshold (0.337) yields maximum ROI.
-At this threshold, we catch ₹22,745,000 in fraud but block legitimate transactions costing ₹447,500 in friction.
-Net savings: ₹22,297,500 (97.5% of total possible fraud losses).
+Deploying lightgbm using the Business-Optimal threshold (0.374) yields maximum ROI.
+At this threshold, we catch ₹21,970,000.00 in fraud but block legitimate transactions costing ₹486,300.00 in friction.
+Net savings: ₹21,483,700.00 (93.9% of total possible fraud losses).
 ```
 Run the ROI analysis yourself: `python scripts/cost_benefit_analysis.py --dataset paysim --fp-cost 100`
 
