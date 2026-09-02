@@ -425,8 +425,9 @@ def run_pipeline(
                 # Optimize threshold strictly on the validation set!
                 t_youden = find_optimal_threshold(y_val_np, y_prob_val, method="youden")
                 t_f1 = find_optimal_threshold(y_val_np, y_prob_val, method="f1")
-                optimal_thresholds[name] = t_f1
-                logger.info(f"  {name}: Youden={t_youden:.4f}, F1={t_f1:.4f} (using F1)")
+                t_business = find_optimal_threshold(y_val_np, y_prob_val, method="business", avg_fraud_value=5000.0, fp_cost=100.0)
+                optimal_thresholds[name] = t_business
+                logger.info(f"  {name}: Youden={t_youden:.4f}, F1={t_f1:.4f}, Business={t_business:.4f} (using Business)")
             else:
                 optimal_thresholds[name] = 0.5
                 logger.info(f"  {name}: threshold=0.5 (ablation mode)")
@@ -452,9 +453,19 @@ def run_pipeline(
         logger.info("  STEP 9: STACKING ENSEMBLE")
         logger.info("=" * 70)
 
-        # Dynamically select top 3 models by PR-AUC (exclude unsupervised/weak models)
-        supervised_results = {k: v for k, v in post_ihs_results.items() if k not in ["autoencoder", "isolation_forest", "svm_rbf"]}
-        sorted_models = sorted(supervised_results.items(), key=lambda x: x[1].get("pr_auc", 0.0), reverse=True)
+        # Dynamically select top 3 models by Validation PR-AUC (exclude unsupervised/weak models)
+        val_results = {}
+        for name, model in all_models.items():
+            if name in ["autoencoder", "isolation_forest", "svm_rbf"]:
+                continue
+            t = optimal_thresholds.get(name, 0.5)
+            # Evaluate on validation set silently (just to get the metric dictionary)
+            val_results[name] = _evaluate_model(
+                model, f"{name} (Validation, t={t:.3f})",
+                X_val_np, y_val_np, t,
+            )
+
+        sorted_models = sorted(val_results.items(), key=lambda x: x[1].get("pr_auc", 0.0), reverse=True)
         top_model_names = [name for name, _ in sorted_models[:3]]
         
         logger.info(f"  Selected top 3 base models for stacking: {top_model_names}")
@@ -476,7 +487,7 @@ def run_pipeline(
             predictions_df_val["stacking_ensemble"] = y_prob_stack_val
             predictions_df_test["stacking_ensemble"] = y_prob_stack_test
 
-            t_stack = find_optimal_threshold(y_val_np, y_prob_stack_val, method="f1")
+            t_stack = find_optimal_threshold(y_val_np, y_prob_stack_val, method="business", avg_fraud_value=5000.0, fp_cost=100.0)
             optimal_thresholds["stacking_ensemble"] = t_stack
 
             post_ihs_results["stacking_ensemble"] = _evaluate_model(
