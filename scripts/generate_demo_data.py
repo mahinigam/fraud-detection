@@ -12,12 +12,7 @@ def generate_demo_data():
     df = pd.read_csv("data/raw/paysim/paysim.csv", nrows=150000)
     
     # We want a specific merchant that will be the target of the abuse ring
-    # In PaySim, merchants often start with 'M' in nameDest
-    merchants = df[df['nameDest'].str.startswith('M', na=False)]['nameDest'].unique()
     target_merchant = "M1982863514"
-    if target_merchant not in merchants:
-        # If not in the first 150k rows, just force it on the most frequent one
-        target_merchant = df['nameDest'].value_counts().index[0]
         
     print(f"Selected target merchant: {target_merchant}")
     
