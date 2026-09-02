@@ -141,14 +141,14 @@ with col_ai:
                     """
                     
                     response = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3.6-flash',
                         contents=prompt,
                     )
                     st.info(response.text)
                 except Exception as e:
                     st.error(f"Failed to generate report: {e}")
     else:
-        st.info("Click the button above to generate a natural language explanation of the ongoing attack using Gemini 2.5 Flash.")
+        st.info("Click the button above to generate a natural language explanation of the ongoing attack using Gemini 3.6 Flash.")
         
 st.markdown("---")
 st.subheader("Model Explainability (SHAP)")
